@@ -16,13 +16,40 @@
 - Confirmed migration status is up to date.
 - Ran the seed twice successfully; the second run reused existing records.
 - Verified browser registration, email login, logout, mock OTP, admin protection, admin access, and rate limiting.
+- Added Zod validation for registration, credentials, and mock OTP inputs.
+- Added database-backed rate limiting to both email credentials and OTP authentication.
+- Added database-backed rate limiting to registration failures and duplicate-email attempts.
+- Added a server-side admin role check in addition to proxy protection.
+- Removed the hardcoded Auth.js secret fallback.
+- Added `DIRECT_URL` and `AUTH_URL` documentation; Prisma CLI now uses `DIRECT_URL` while runtime uses pooled `DATABASE_URL`.
 
 ## Remaining
 
-- Commit the completed repair as `phase-1: repair`.
+- Add valid `DIRECT_URL` to local environment files before running Prisma CLI commands after checkout.
+
+## Phase 1 Rules Audit
+
+### PASS
+
+- PostgreSQL Prisma migrations are used.
+- Passwords are hashed with bcrypt.
+- Registration, credentials, and OTP inputs are Zod-validated.
+- Email and OTP authentication are rate-limited by IP over a 15-minute window.
+- Registration failures and duplicate-email attempts are rate-limited by IP over a 15-minute window.
+- Admin access has proxy and server-side role checks.
+- `.env.example` documents pooled runtime, direct migration, Auth.js, OAuth, Cloudinary, Razorpay, Shiprocket, and Resend variables.
+
+### Larger Violations Deferred
+
+- Required models are missing: `Address`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Payment`, `Shipment`, `Review`, `Wishlist`, `Settings`, `StockReservation`, and `WebhookEvent`.
+- `Product` still needs the rules-aligned `stock`, `weightGrams`, and `codAllowed` contract; the current schema uses variant stock, `weightGm`, and `isCodEnabled`, and defaults GST to `0` instead of `12`.
+- Provider-agnostic interfaces and mocks are missing for Razorpay, Shiprocket, WhatsApp, SMS/OTP, and Email.
+- Webhook signature verification, idempotency, checkout rate limits, and server-side order total recomputation are not implemented because their workflows are not present yet.
+- The `/admin` surface is only a protected placeholder and does not yet provide the required owner-managed commerce administration.
 
 ## Known Issues
 
 - NextAuth logs an optional `NEXTAUTH_URL` warning during development; the app boots and flows pass without it.
 - PostgreSQL emits a node-pg SSL mode compatibility warning; the configured connection remains functional.
+- The current local environment exposes `DATABASE_URL` and `DATABASE_URL_POOLED` but not `DIRECT_URL`; `.env.example` documents the required direct migration URL without copying secrets into the repository.
 - The project rules file is currently empty, so no additional rule content was available to merge into `CLAUDE.md`.

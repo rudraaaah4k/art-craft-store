@@ -4,6 +4,7 @@ import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { emailPasswordSchema, phoneOtpSchema } from '@/lib/validation'
 
 const hasConfiguredGoogleCredential = (value: string | undefined) => Boolean(value && !value.startsWith('your-'))
 const googleCredentials = hasConfiguredGoogleCredential(process.env.GOOGLE_CLIENT_ID)
@@ -29,37 +30,37 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials, req) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Invalid credentials')
-        }
-
+        const parsedCredentials = emailPasswordSchema.safeParse(credentials)
         const forwardedFor = req.headers?.['x-forwarded-for']
         const ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor || '127.0.0.1'
-        
-        // Rate Limiting Logic
         const attempts = await prisma.loginAttempt.count({
           where: {
             ip,
-            createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } // last 15 mins
-          }
+            createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
+          },
         })
-        
+
         if (attempts >= 5) {
           throw new Error('Rate limit exceeded. Please try again later.')
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
-
-        if (!user || !user.password) {
-          await prisma.loginAttempt.create({ data: { ip, email: credentials.email } })
+        if (!parsedCredentials.success) {
+          await prisma.loginAttempt.create({ data: { ip } })
           throw new Error('Invalid credentials')
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+        const user = await prisma.user.findUnique({
+          where: { email: parsedCredentials.data.email },
+        })
+
+        if (!user || !user.password) {
+          await prisma.loginAttempt.create({ data: { ip, email: parsedCredentials.data.email } })
+          throw new Error('Invalid credentials')
+        }
+
+        const isPasswordValid = await bcrypt.compare(parsedCredentials.data.password, user.password)
         if (!isPasswordValid) {
-          await prisma.loginAttempt.create({ data: { ip, email: credentials.email } })
+          await prisma.loginAttempt.create({ data: { ip, email: parsedCredentials.data.email } })
           throw new Error('Invalid credentials')
         }
 
@@ -78,19 +79,33 @@ export const authOptions: NextAuthOptions = {
         phone: { label: 'Phone Number', type: 'text' },
         otp: { label: 'OTP Code', type: 'text' },
       },
-      async authorize(credentials) {
-        if (!credentials?.phone || !credentials?.otp) {
+      async authorize(credentials, req) {
+        const parsedCredentials = phoneOtpSchema.safeParse(credentials)
+        const forwardedFor = req.headers?.['x-forwarded-for']
+        const ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor || '127.0.0.1'
+        const attempts = await prisma.loginAttempt.count({
+          where: {
+            ip,
+            createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
+          },
+        })
+
+        if (attempts >= 5) {
+          throw new Error('Rate limit exceeded. Please try again later.')
+        }
+
+        if (!parsedCredentials.success) {
+          await prisma.loginAttempt.create({ data: { ip } })
           throw new Error('Phone and OTP required')
         }
 
-        // Mock Provider Logic
-        if (credentials.otp === '123456') {
+        if (parsedCredentials.data.otp === '123456') {
           const user = await prisma.user.upsert({
-            where: { phone: credentials.phone },
+            where: { phone: parsedCredentials.data.phone },
             update: {},
             create: {
-              phone: credentials.phone,
-              name: `User ${credentials.phone}`,
+              phone: parsedCredentials.data.phone,
+              name: `User ${parsedCredentials.data.phone}`,
               phoneVerified: new Date(),
             },
           })
@@ -102,7 +117,8 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
           }
         }
-        
+
+        await prisma.loginAttempt.create({ data: { ip, email: `phone:${parsedCredentials.data.phone}` } })
         throw new Error('Invalid OTP')
       },
     }),
@@ -128,5 +144,5 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/auth/login',
   },
-  secret: process.env.AUTH_SECRET || 'fallback-secret',
+  secret: process.env.AUTH_SECRET,
 }
