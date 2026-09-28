@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: Request) {
   try {
@@ -31,7 +29,7 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ message: 'User created successfully', user: { id: user.id, email: user.email } }, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 })
   }
 }

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-
-const prisma = new PrismaClient()
+import { prisma } from '../src/lib/prisma'
 
 async function main() {
   console.log('Seeding database...')
@@ -43,7 +41,6 @@ async function main() {
     create: { name: 'Digital Art', slug: 'digital-art', description: 'Digital prints and illustrations' },
   })
   
-  const categories = [catPaintings, catCrafts, catDigital]
   console.log(`Categories created.`)
 
   // 3. Create 12 Products with Variants

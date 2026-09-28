@@ -2,19 +2,25 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+const hasConfiguredGoogleCredential = (value: string | undefined) => Boolean(value && !value.startsWith('your-'))
+const googleCredentials = hasConfiguredGoogleCredential(process.env.GOOGLE_CLIENT_ID)
+  && hasConfiguredGoogleCredential(process.env.GOOGLE_CLIENT_SECRET)
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma) as any,
+  adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt' },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    }),
+    ...(googleCredentials
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          }),
+        ]
+      : []),
     CredentialsProvider({
       id: 'credentials',
       name: 'Email and Password',
@@ -27,12 +33,13 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid credentials')
         }
 
-        const ip = req.headers?.['x-forwarded-for'] || '127.0.0.1';
+        const forwardedFor = req.headers?.['x-forwarded-for']
+        const ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor || '127.0.0.1'
         
         // Rate Limiting Logic
         const attempts = await prisma.loginAttempt.count({
           where: {
-            ip: typeof ip === 'string' ? ip : 'unknown',
+            ip,
             createdAt: { gte: new Date(Date.now() - 15 * 60 * 1000) } // last 15 mins
           }
         })
@@ -46,13 +53,13 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user || !user.password) {
-          await prisma.loginAttempt.create({ data: { ip: typeof ip === 'string' ? ip : 'unknown', email: credentials.email } })
+          await prisma.loginAttempt.create({ data: { ip, email: credentials.email } })
           throw new Error('Invalid credentials')
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
         if (!isPasswordValid) {
-          await prisma.loginAttempt.create({ data: { ip: typeof ip === 'string' ? ip : 'unknown', email: credentials.email } })
+          await prisma.loginAttempt.create({ data: { ip, email: credentials.email } })
           throw new Error('Invalid credentials')
         }
 
@@ -103,17 +110,17 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role
+        token.role = user.role
         token.id = user.id
-        token.phone = (user as any).phone
+        token.phone = user.phone
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
-        (session.user as any).id = token.id;
-        (session.user as any).phone = token.phone;
+        session.user.role = token.role
+        session.user.id = token.id
+        session.user.phone = token.phone
       }
       return session
     },

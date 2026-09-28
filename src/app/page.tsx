@@ -13,7 +13,7 @@ export default async function Home() {
       {session ? (
         <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md text-center text-black">
           <p className="mb-2">Logged in as: <strong>{session.user?.name || session.user?.email || 'User'}</strong></p>
-          <p className="mb-4 text-sm text-gray-500">Role: {(session.user as any)?.role}</p>
+          <p className="mb-4 text-sm text-gray-500">Role: {session.user?.role}</p>
           <div className="flex justify-center space-x-4 mb-4">
             <Link href="/admin" className="text-blue-600 hover:underline">Go to Admin</Link>
           </div>
