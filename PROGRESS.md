@@ -53,3 +53,22 @@
 - PostgreSQL emits a node-pg SSL mode compatibility warning; the configured connection remains functional.
 - The current local environment exposes `DATABASE_URL` and `DATABASE_URL_POOLED` but not `DIRECT_URL`; `.env.example` documents the required direct migration URL without copying secrets into the repository.
 - The project rules file is currently empty, so no additional rule content was available to merge into `CLAUDE.md`.
+
+## Phase 2A: Data Model
+
+### Done
+
+- Added the complete Phase 2A Prisma model set with integer paise money fields, relations, indexes, and foreign keys.
+- Added typed mock provider interfaces and environment-aware factories under `src/lib/providers/`.
+- Updated the seed for 12 paise-priced products, variants, 2 coupons, admin, categories, and default settings.
+- Created and applied migration `20260928165444_phase2_data_model`.
+- Ran the seed twice successfully and verified seeded record counts and paise values.
+- `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `prisma migrate status` pass.
+
+### Deferred to Stage B
+
+- Admin layout and catalog CRUD.
+- Product image upload/reordering, categories, coupons, and admin help tooltips.
+- Public product queries and checkout workflows.
+
+See `WALKTHROUGH.md` for the Stage 2A PASS/FAIL summary and migration notes.
