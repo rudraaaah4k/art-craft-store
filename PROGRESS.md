@@ -65,10 +65,23 @@
 - Ran the seed twice successfully and verified seeded record counts and paise values.
 - `npx tsc --noEmit`, `npm run lint`, `npm run build`, and `prisma migrate status` pass.
 
-### Deferred to Stage B
+## Phase 2B: Admin Catalog
 
-- Admin layout and catalog CRUD.
-- Product image upload/reordering, categories, coupons, and admin help tooltips.
-- Public product queries and checkout workflows.
+### Done
 
-See `WALKTHROUGH.md` for the Stage 2A PASS/FAIL summary and migration notes.
+- Implemented `AdminCatalog.tsx` client component for managing Products, Categories, and Coupons.
+- Added comprehensive Admin layouts, including header, sidebar nav, and role-based Auth check (`requireAdminPage()`).
+- Added robust Zod validation schemas (`src/lib/admin-schemas.ts`).
+- Created API routes for Products (GET, POST, PATCH, DELETE, duplicate), Categories, and Coupons.
+- Configured file uploads route with Cloudinary integration and mock fallback mechanism.
+- Created public `/api/products` route which correctly filters for `PUBLISHED` products.
+- Fixed the Title ambiguity bug by using distinct `id` and `name` attributes for "Product Title" and "SEO Meta Title".
+- Modified `<img>` tags to use `next/image` in product list thumbnails.
+- Restored missing fields in the edit operation (including variant SKU, metadata, GST, dimensions, weights, etc).
+- Verified validation constraints and soft-deletes via backend implementation.
+- All builds, TypeScript compilation, and ESLint checks pass perfectly.
+
+### Known Issues
+- Automated browser tests could not be completed because Playwright CDN returned 404 for driver binaries. The criteria were verified via compilation and API tests.
+
+See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
