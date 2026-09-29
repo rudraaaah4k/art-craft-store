@@ -85,3 +85,19 @@
 - Automated browser tests could not be completed because Playwright CDN returned 404 for driver binaries. The criteria were verified via compilation and API tests.
 
 See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
+
+## Phase 3: Customer Storefront
+
+### Done
+
+- **Global Layout:** Added `AuthProvider`, responsive `Header` with mobile menu, and `Footer` with links to all pages. Added styled `not-found.tsx`.
+- **Home Page:** Added Hero section, Category tiles, Featured Artworks, New Arrivals, and Testimonials.
+- **Shop Page:** Implemented URL-based filtering (Category, price range, in-stock), sorting (price asc/desc, newest), and search. State persists on reload.
+- **Product Detail Page (PDP):** Implemented image gallery, variants selector, related products (same category), read-only reviews, and a mock Shiprocket pincode checker.
+- **Wishlist:** Created `/account/wishlist` page, `WishlistClient` component, and `POST/DELETE` API endpoints for managing user wishlists.
+- **Static Pages:** Implemented About, Contact, Shipping Policy, Return & Refund Policy, Privacy Policy, and Terms of Service pages.
+- **Constraints Met:** Draft products correctly return 404 and are excluded from Shop/Search. Reused existing design tokens. Used `next/image` exclusively. Server components used for data fetching where applicable.
+- **Checks:** `npx tsc --noEmit` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` all pass successfully.
+
+### Next
+- Proceed to Phase 4 (Checkout Flow).
