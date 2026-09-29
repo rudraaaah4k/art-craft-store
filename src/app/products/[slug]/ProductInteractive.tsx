@@ -23,9 +23,9 @@ export function ProductInteractive({ product }: { product: ProductWithRelations 
   // Wishlist state
   const [wishlistMsg, setWishlistMsg] = useState('')
 
-  const activePrice = selectedVariant ? selectedVariant.price : (product.salePrice || product.price)
+  const activePrice = selectedVariant ? (selectedVariant.price ?? product.price) : (product.salePrice ?? product.price)
   const activeStock = selectedVariant ? selectedVariant.stock : product.stock
-  const originalPrice = selectedVariant ? null : product.price // Variants don't have sale price implemented currently
+  const originalPrice = product.price
 
   async function checkDelivery(e: React.FormEvent) {
     e.preventDefault()
@@ -107,7 +107,7 @@ export function ProductInteractive({ product }: { product: ProductWithRelations 
 
         <div className="flex items-center gap-4 mb-6">
           <span className="text-3xl font-bold text-terracotta">₹{(activePrice / 100).toLocaleString('en-IN')}</span>
-          {!selectedVariant && product.salePrice && (
+          {!selectedVariant && product.salePrice && product.salePrice < product.price && (
             <span className="text-xl text-charcoal/50 line-through">₹{(originalPrice / 100).toLocaleString('en-IN')}</span>
           )}
           <span className="text-sm text-charcoal/60">(Incl. of all taxes)</span>
