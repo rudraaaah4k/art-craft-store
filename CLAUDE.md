@@ -16,6 +16,8 @@ Next.js App Router + TypeScript (strict) + Tailwind, PostgreSQL + Prisma (Neon/S
 - Return window 7 days for non-custom items; custom items non-returnable.
 - Each product has processing time (e.g. 3-5 days) added to delivery ETA.
 - Stock reserved for 15 min at checkout (StockReservation) to prevent overselling; released on expiry/failure by cron.
+- Stock source: products with variants sell and reserve from `Variant.stock` for the selected variant; products without variants sell and reserve from `Product.stock`. `StockReservation.variantId` must be set whenever a variant is selected.
+- Orders snapshot product title, SKU, unit price, GST, and totals in `OrderItem`; `Order.userId` is optional for guest checkout, while order email and phone are stored directly on `Order`.
 
 ## Data model (ask before changing)
 User, Address, Category, Product, ProductImage, Variant, Cart, CartItem, Order, OrderItem, Payment, Shipment, Coupon, Review, Wishlist, Settings, StockReservation, WebhookEvent.
