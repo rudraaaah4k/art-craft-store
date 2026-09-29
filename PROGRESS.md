@@ -51,7 +51,7 @@
 
 - NextAuth logs an optional `NEXTAUTH_URL` warning during development; the app boots and flows pass without it.
 - PostgreSQL emits a node-pg SSL mode compatibility warning; the configured connection remains functional.
-- The current local environment exposes `DATABASE_URL` and `DATABASE_URL_POOLED` but not `DIRECT_URL`; `.env.example` documents the required direct migration URL without copying secrets into the repository.
+- The local environment must define pooled `DATABASE_URL` and direct `DIRECT_URL`; `.env.example` documents both without copying secrets into the repository.
 - The project rules file is currently empty, so no additional rule content was available to merge into `CLAUDE.md`.
 
 ## Phase 2A: Data Model
