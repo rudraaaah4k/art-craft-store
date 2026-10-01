@@ -100,4 +100,35 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - **Checks:** `npx tsc --noEmit` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` all pass successfully. Final production Lighthouse mobile audit: Home Performance 89; Product Performance 78, Accessibility 94, Best Practices 96, SEO 100. The PDP remains below the 85 Performance target and is accepted as the final Phase 3 measurement.
 
 ### Next
-- Await approval to proceed to Phase 4 (Checkout Flow).
+- Phase 4 is implemented and committed in incremental slices. Await approval to proceed to Phase 5.
+
+## Phase 4: Cart, Checkout, and Payments
+
+### Done
+
+- **Cart:** Added cookie-backed guest carts, authenticated-cart merge, add/remove/update quantity APIs, cart page, PDP add-to-cart, and live header count.
+- **Checkout:** Added guest checkout address form, saved-address selection, mock Shiprocket quote, coupon application, and integer-paise server totals.
+- **Order safety:** Server reloads product and variant prices, GST, stock, coupon, shipping, COD settings, and payment method; browser-sent prices/totals are not accepted. Stock decrement and 15-minute reservations are atomic.
+- **Payments:** Added Razorpay Orders API integration, Checkout widget wiring, HMAC payment verification, raw-body webhook verification, WebhookEvent idempotency, failure release, and mock-provider fallback.
+- **COD and expiry:** Enforced global/product/made-to-order COD rules, configured limit and fee, database-backed endpoint rate limits, and protected expired-reservation cleanup endpoint.
+- **Account:** Added saved address CRUD, order history/detail pages, delivered-order review eligibility API, and storefront review form.
+- **Checks:** `npx tsc --noEmit`, `npm run lint` (zero warnings), and `npm run build` pass.
+
+### Acceptance Evidence
+
+- Guest PDP -> cart -> checkout: PASS. Cart count persisted as 1; checkout quote computed ₹850 subtotal, ₹91.07 GST component, ₹99 shipping, ₹85 discount, and ₹864 total.
+- Price/totals tampering: PASS by API contract. Checkout schemas accept identities and checkout inputs only; totals are recomputed from database records.
+- Concurrent last-unit checkout: PASS. Two simultaneous requests returned one 201 and one 400 `Not enough stock`.
+- Webhook replay: PASS with a signed local test payload. First request returned 200, replay returned 200 duplicate; database showed one WebhookEvent, one captured Payment, and one order transition.
+- Failed-payment release: PASS. Failure endpoint returned 200 and restored reserved variant stock.
+- COD limit: PASS. ₹12,000 mountain order quote returned 400 `Cash on Delivery is not available for this order.`
+- Real Razorpay TEST-mode payment: NOT VERIFIED. Local environment has no Razorpay credentials, so the mock provider and confirmation email path were tested; live Checkout requires test keys and a public webhook endpoint.
+- Authenticated order/address/review browser flow: NOT VERIFIED in this session because the existing browser dev session did not complete seeded login. Guest authorization checks returned 401 as expected; TypeScript, lint, build, and route implementation passed.
+
+### Commits
+
+- `ab8b121 phase-4a: cart`
+- `e7fa41a phase-4b: checkout+totals`
+- `f84708a phase-4c: razorpay+webhook`
+- `e903a57 phase-4d: cod+stock-reservation`
+- `d3cdc87 phase-4e: account+reviews`

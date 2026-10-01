@@ -80,4 +80,46 @@
 - `src/components/Header.tsx`, `Footer.tsx`
 - `src/app/layout.tsx`, `not-found.tsx`
 
+# Phase 4 Walkthrough
+
+## Acceptance Criteria
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| Guest cart persists and header count updates | PASS | Browser test added Vintage Sci-Fi Poster, showed `Added to cart`, header count `1`, and `/cart` showed the variant, quantity, and ₹850 subtotal. |
+| Checkout supports address, pincode, coupon, payment choice, and summary | PASS (mock path) | Browser quote showed ₹850 subtotal, ₹91.07 GST, ₹99 shipping, ₹85 WELCOME10 discount, and ₹864 total. |
+| Client price/total tampering cannot change charged amount | PASS by implementation/API contract | Checkout receives only cart identities and checkout inputs; `calculateCheckoutTotals()` reloads all monetary values and settings from Prisma. |
+| Two simultaneous last-unit checkouts cannot both succeed | PASS | Two concurrent API requests for Floral Watercolor returned one 201 and one 400 `Not enough stock`. |
+| Webhook replay is idempotent | PASS (synthetic signed payload) | First signed `payment.captured` request returned 200; replay returned `{"duplicate":true}`. Database verification found one event, one captured payment, and one CONFIRMED/PAID order transition. |
+| Failed or expired payment releases stock | PASS | Failure endpoint returned 200 and restored variant stock from 0 to 1; scheduled cleanup endpoint is implemented for expired reservations. |
+| COD rules are enforced | PASS | COD quote for the ₹12,000 mountain product returned HTTP 400; server checks settings, product flags, made-to-order status, and max total. |
+| Full guest Razorpay TEST-mode purchase completes | NOT VERIFIED | No Razorpay test credentials are configured locally. Mock Razorpay order creation, mock email settlement, and confirmation page were verified; real Checkout/webhook delivery needs credentials and a public endpoint. |
+| Logged-in order history, detail, saved addresses, and delivered-order reviews | NOT VERIFIED in browser | Routes, Zod validation, ownership checks, and delivered-order gate compile/build; seeded browser login did not complete in the existing dev session. Guest address/review requests correctly returned 401. |
+| `npx tsc --noEmit`, `npm run lint`, `npm run build` | PASS | All three final commands passed; ESLint reported zero warnings. |
+
+## Implementation Summary
+
+- `ab8b121 phase-4a: cart`
+- `e7fa41a phase-4b: checkout+totals`
+- `f84708a phase-4c: razorpay+webhook`
+- `e903a57 phase-4d: cod+stock-reservation`
+- `d3cdc87 phase-4e: account+reviews`
+
+## Known Issues and Deferred Verification
+
+- Razorpay real TEST-mode flow is intentionally unclaimed until test credentials and a public webhook URL are available.
+- Authenticated account browser coverage remains unverified because the existing dev browser session did not complete seeded login; this should be the first focused check after review.
+- Reservation cleanup is exposed as a protected cron endpoint and must be scheduled by deployment configuration.
+
+## Files Changed
+
+- `src/lib/cart.ts`, `src/lib/checkout.ts`, `src/lib/rate-limit.ts`, `src/lib/payment-settlement.ts`
+- `src/lib/providers/payments.ts`, `src/lib/validation.ts`
+- `src/app/api/cart/*`, `src/app/api/checkout/*`, `src/app/api/payments/*`, `src/app/api/webhooks/*`, `src/app/api/cron/*`
+- `src/app/cart/*`, `src/app/checkout/*`, `src/app/orders/[id]/page.tsx`
+- `src/app/api/addresses/*`, `src/app/api/reviews/route.ts`
+- `src/app/account/addresses/page.tsx`, `src/app/account/orders/*`
+- `src/app/products/[slug]/ReviewForm.tsx`, `src/app/products/[slug]/page.tsx`
+- `src/components/Header.tsx`, `.env.example`
+
 
