@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FormEvent } from 'react'
+import { FormEvent, useCallback } from 'react'
 import type { Category } from '@prisma/client'
 
 export function ShopFilters({ categories }: { categories: Category[] }) {
@@ -15,12 +15,13 @@ export function ShopFilters({ categories }: { categories: Category[] }) {
   const currentInStock = searchParams.get('inStock') === 'true'
   const currentSort = searchParams.get('sort') || 'newest'
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  const handleSubmit = useCallback((e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const url = new URLSearchParams()
     
-    if (currentQ) url.set('q', currentQ)
+    const q = fd.get('q') as string
+    if (q) url.set('q', q)
     
     const cat = fd.get('category') as string
     if (cat) url.set('category', cat)
@@ -38,26 +39,29 @@ export function ShopFilters({ categories }: { categories: Category[] }) {
     if (srt && srt !== 'newest') url.set('sort', srt)
     
     router.push(`/shop?${url.toString()}`)
-  }
+  }, [router])
 
-  function handleClear() {
-    if (currentQ) {
-      router.push(`/shop?q=${currentQ}`)
-    } else {
-      router.push('/shop')
-    }
-  }
+  const handleClear = useCallback(() => {
+    router.push('/shop')
+  }, [router])
+
+  // Use a composite key that changes whenever URL params change,
+  // forcing React to remount the form with fresh defaultValues.
+  const formKey = `${currentCategory}|${currentMinPrice}|${currentMaxPrice}|${currentInStock}|${currentSort}`
 
   return (
-    <form onSubmit={handleSubmit} className="bg-sand/10 p-4 border border-sand rounded space-y-6">
+    <form onSubmit={handleSubmit} key={formKey} className="bg-sand/10 p-4 border border-sand rounded space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="font-bold font-serif text-lg">Filters</h2>
         <button type="button" onClick={handleClear} className="text-xs text-terracotta hover:underline">Clear All</button>
       </div>
 
+      {/* Hidden search field to preserve query */}
+      {currentQ && <input type="hidden" name="q" value={currentQ} />}
+
       <div>
-        <label className="block text-sm font-medium mb-2">Category</label>
-        <select name="category" defaultValue={currentCategory} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta">
+        <label htmlFor="shop-category" className="block text-sm font-medium mb-2">Category</label>
+        <select id="shop-category" name="category" defaultValue={currentCategory} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta">
           <option value="">All Categories</option>
           {categories.map(c => (
             <option key={c.id} value={c.slug}>{c.name}</option>
@@ -68,9 +72,9 @@ export function ShopFilters({ categories }: { categories: Category[] }) {
       <div>
         <label className="block text-sm font-medium mb-2">Price Range (₹)</label>
         <div className="flex items-center gap-2">
-          <input type="number" name="minPrice" placeholder="Min" defaultValue={currentMinPrice} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta" />
+          <input type="number" name="minPrice" placeholder="Min" defaultValue={currentMinPrice} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta" aria-label="Minimum price" />
           <span>-</span>
-          <input type="number" name="maxPrice" placeholder="Max" defaultValue={currentMaxPrice} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta" />
+          <input type="number" name="maxPrice" placeholder="Max" defaultValue={currentMaxPrice} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta" aria-label="Maximum price" />
         </div>
       </div>
 
@@ -82,8 +86,8 @@ export function ShopFilters({ categories }: { categories: Category[] }) {
       </div>
 
       <div className="pt-4 border-t border-sand/50">
-        <label className="block text-sm font-medium mb-2">Sort By</label>
-        <select name="sort" defaultValue={currentSort} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta">
+        <label htmlFor="shop-sort" className="block text-sm font-medium mb-2">Sort By</label>
+        <select id="shop-sort" name="sort" defaultValue={currentSort} className="w-full p-2 border border-sand bg-white rounded text-sm focus:outline-none focus:border-terracotta">
           <option value="newest">Newest Arrivals</option>
           <option value="price_asc">Price: Low to High</option>
           <option value="price_desc">Price: High to Low</option>

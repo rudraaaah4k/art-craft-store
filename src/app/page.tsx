@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import type { Product, ProductImage } from '@prisma/client'
 
+export const revalidate = 60
+
 export default async function HomePage() {
   const categories = await prisma.category.findMany({
     take: 3,

@@ -90,13 +90,13 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 
 ### Done
 
-- **Global Layout:** Added `AuthProvider`, responsive `Header` with mobile menu, and `Footer` with links to all pages. Added styled `not-found.tsx`.
-- **Home Page:** Added Hero section, Category tiles, Featured Artworks, New Arrivals, and Testimonials.
-- **Shop Page:** Implemented URL-based filtering (Category, price range, in-stock), sorting (price asc/desc, newest), and search. State persists on reload.
+- **Global Layout:** Added `AuthProvider`, responsive `Header` with mobile menu, and `Footer` with correct links to pages. Added styled `not-found.tsx`.
+- **Home Page:** Added Hero section, Category tiles, Featured Artworks, New Arrivals, and Testimonials. Used `revalidate = 60` for caching while keeping DB data fresh.
+- **Shop Page:** Implemented URL-based filtering (Category, price range, in-stock), sorting (price asc/desc, newest), and search. State persists on reload and browser history via fully controlled URL params.
 - **Product Detail Page (PDP):** Implemented image gallery, variants selector, related products (same category), read-only reviews, and a mock Shiprocket pincode checker.
 - **Wishlist:** Created `/account/wishlist` page, `WishlistClient` component, and `POST/DELETE` API endpoints for managing user wishlists.
-- **Static Pages:** Implemented About, Contact, Shipping Policy, Return & Refund Policy, Privacy Policy, and Terms of Service pages.
-- **Constraints Met:** Draft products correctly return 404 and are excluded from Shop/Search. Reused existing design tokens. Used `next/image` exclusively. Server components used for data fetching where applicable.
+- **Static Pages:** Implemented About, Contact (with extracted metadata layout), Shipping Policy, Return & Refund Policy, Privacy Policy, and Terms of Service pages.
+- **Constraints Met:** Draft products correctly return 404 and are excluded from Shop/Search. Reused existing design tokens. Used `next/image` exclusively. Placeholder images generated and added to `public/images/`.
 - **Checks:** `npx tsc --noEmit` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` all pass successfully.
 
 ### Next

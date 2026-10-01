@@ -27,7 +27,7 @@ export function Footer() {
               <li><Link href="/contact" className="hover:text-terracotta transition-colors">Contact Us</Link></li>
               <li><Link href="/shipping-policy" className="hover:text-terracotta transition-colors">Shipping Policy</Link></li>
               <li><Link href="/return-policy" className="hover:text-terracotta transition-colors">Return & Refund</Link></li>
-              <li><Link href="/faq" className="hover:text-terracotta transition-colors">FAQ</Link></li>
+              <li><Link href="/about" className="hover:text-terracotta transition-colors">About Us</Link></li>
             </ul>
           </div>
           <div>
