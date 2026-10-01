@@ -2,14 +2,17 @@ import { NextResponse } from 'next/server'
 import { verifyRazorpayWebhook } from '@/lib/providers/payments'
 import { prisma } from '@/lib/prisma'
 import { settlePayment } from '@/lib/payment-settlement'
+import { razorpayWebhookSchema } from '@/lib/validation'
+import { enforceRateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
+  if (!await enforceRateLimit(request, 'razorpay-webhook', 100)) return NextResponse.json({ error: 'Too many webhook attempts.' }, { status: 429 })
   const rawBody = await request.text()
   const signature = request.headers.get('x-razorpay-signature') ?? ''
   const eventId = request.headers.get('x-razorpay-event-id') ?? ''
   if (!eventId || !signature || !verifyRazorpayWebhook(rawBody, signature)) return NextResponse.json({ error: 'Invalid webhook.' }, { status: 400 })
   let payload: { event?: string; payload?: { payment?: { entity?: { id?: string; order_id?: string; amount?: number } } } }
-  try { payload = JSON.parse(rawBody) } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }) }
+  try { payload = razorpayWebhookSchema.parse(JSON.parse(rawBody)) } catch { return NextResponse.json({ error: 'Invalid webhook payload.' }, { status: 400 }) }
 
   try {
     await prisma.$transaction(async (transaction) => {

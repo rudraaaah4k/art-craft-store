@@ -51,3 +51,12 @@ export const paymentVerifySchema = z.object({
   razorpayPaymentId: z.string().trim().min(1).max(100),
   razorpaySignature: z.string().trim().min(1).max(200),
 })
+
+export const razorpayWebhookSchema = z.object({
+  event: z.string().min(1),
+  payload: z.object({
+    payment: z.object({
+      entity: z.object({ id: z.string().optional(), order_id: z.string().optional(), amount: z.number().optional() }),
+    }).optional(),
+  }).optional(),
+})

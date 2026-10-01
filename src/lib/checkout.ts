@@ -99,7 +99,18 @@ export async function calculateCheckoutTotals(cart: CartWithItems, details: Chec
   return { subtotalPaise, discountPaise, shippingPaise, gstPaise, codFeePaise, totalPaise, weightGrams, couponCode, codAllowed: codAllowed && totalPaise <= codMaxPaise, items }
 }
 
+export async function releaseExpiredReservations(transaction: Prisma.TransactionClient | typeof prisma) {
+  const expired = await transaction.stockReservation.findMany({ where: { status: 'ACTIVE', expiresAt: { lte: new Date() } } })
+  for (const reservation of expired) {
+    if (reservation.variantId) await transaction.variant.update({ where: { id: reservation.variantId }, data: { stock: { increment: reservation.quantity } } })
+    else await transaction.product.update({ where: { id: reservation.productId }, data: { stock: { increment: reservation.quantity } } })
+    await transaction.stockReservation.update({ where: { id: reservation.id }, data: { status: 'EXPIRED', releasedAt: new Date() } })
+  }
+  return expired.length
+}
+
 export async function assertAndReserveStock(transaction: Prisma.TransactionClient, items: CalculatedTotals['items'], orderId: string, sessionId?: string) {
+  await releaseExpiredReservations(transaction)
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000)
   for (const item of items) {
     const stockUpdate = item.variantId

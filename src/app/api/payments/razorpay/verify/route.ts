@@ -3,8 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { settlePayment } from '@/lib/payment-settlement'
 import { paymentVerifySchema } from '@/lib/validation'
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { enforceRateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
+  if (!await enforceRateLimit(request, 'payment-verify', 10)) return NextResponse.json({ error: 'Too many payment attempts. Try again later.' }, { status: 429 })
   const parsed = paymentVerifySchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'Invalid payment response.' }, { status: 400 })
   const order = await prisma.order.findUnique({ where: { id: parsed.data.orderId }, include: { payment: true } })
