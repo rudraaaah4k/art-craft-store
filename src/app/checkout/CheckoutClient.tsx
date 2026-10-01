@@ -1,0 +1,60 @@
+'use client'
+
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+type Totals = { subtotalPaise: number; discountPaise: number; shippingPaise: number; gstPaise: number; codFeePaise: number; totalPaise: number; codAllowed: boolean }
+
+const money = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN')}`
+
+export function CheckoutClient() {
+  const [form, setForm] = useState({ email: '', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', postalCode: '', couponCode: '', paymentMethod: 'RAZORPAY' as 'RAZORPAY' | 'COD' })
+  const [totals, setTotals] = useState<Totals | null>(null)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!/^\d{6}$/.test(form.postalCode)) return
+    const timer = window.setTimeout(() => {
+      void fetch('/api/checkout/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postalCode: form.postalCode, couponCode: form.couponCode, paymentMethod: form.paymentMethod }) })
+        .then(async (response) => {
+          const data = await response.json()
+          if (!response.ok) setError(data.error)
+          else { setTotals(data.totals); setError('') }
+        })
+    }, 350)
+    return () => window.clearTimeout(timer)
+  }, [form.postalCode, form.couponCode, form.paymentMethod])
+
+  async function submitOrder(event: React.FormEvent) {
+    event.preventDefault()
+    setLoading(true)
+    setError('')
+    const response = await fetch('/api/checkout/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+    const data = await response.json()
+    if (!response.ok) { setError(data.error); setLoading(false); return }
+    router.push(`/orders/${data.orderId}`)
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-serif font-bold mb-8">Checkout</h1>
+      <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+        <form onSubmit={submitOrder} className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {([['email', 'Email', 'email'], ['fullName', 'Full name', 'text'], ['phone', 'Phone', 'tel'], ['postalCode', 'Pincode', 'text'], ['city', 'City', 'text'], ['state', 'State', 'text']] as const).map(([name, label, type]) => <label key={name} className="text-sm font-medium">{label}<input required type={type} value={form[name]} onChange={(event) => setForm({ ...form, [name]: event.target.value })} className="mt-1 w-full border border-sand p-3 bg-white" /></label>)}
+          </div>
+          <label className="text-sm font-medium block">Address line 1<input required value={form.line1} onChange={(event) => setForm({ ...form, line1: event.target.value })} className="mt-1 w-full border border-sand p-3 bg-white" /></label>
+          <label className="text-sm font-medium block">Address line 2<input value={form.line2} onChange={(event) => setForm({ ...form, line2: event.target.value })} className="mt-1 w-full border border-sand p-3 bg-white" /></label>
+          <label className="text-sm font-medium block">Coupon code<input value={form.couponCode} onChange={(event) => setForm({ ...form, couponCode: event.target.value.toUpperCase() })} className="mt-1 w-full border border-sand p-3 bg-white" /></label>
+          <fieldset><legend className="text-sm font-medium mb-2">Payment method</legend><div className="flex gap-4"><label className="border border-sand p-3"><input type="radio" checked={form.paymentMethod === 'RAZORPAY'} onChange={() => setForm({ ...form, paymentMethod: 'RAZORPAY' })} /> Razorpay</label><label className="border border-sand p-3"><input type="radio" checked={form.paymentMethod === 'COD'} onChange={() => setForm({ ...form, paymentMethod: 'COD' })} /> Cash on Delivery</label></div></fieldset>
+          {error && <p className="text-terracotta">{error}</p>}
+          <button disabled={loading || !totals} className="bg-terracotta text-white px-6 py-3 font-medium disabled:opacity-50">{loading ? 'Creating order...' : 'Place order'}</button>
+        </form>
+        <aside className="border border-sand bg-white p-6 h-fit"><h2 className="font-serif text-xl font-bold mb-5">Order Summary</h2>{totals ? <div className="space-y-3 text-sm"><div className="flex justify-between"><span>Subtotal</span><span>{money(totals.subtotalPaise)}</span></div><div className="flex justify-between"><span>GST included</span><span>{money(totals.gstPaise)}</span></div><div className="flex justify-between"><span>Shipping</span><span>{money(totals.shippingPaise)}</span></div>{totals.discountPaise > 0 && <div className="flex justify-between text-deep-olive"><span>Discount</span><span>-{money(totals.discountPaise)}</span></div>}{totals.codFeePaise > 0 && <div className="flex justify-between"><span>COD fee</span><span>{money(totals.codFeePaise)}</span></div>}<div className="border-t border-sand pt-3 flex justify-between font-bold text-lg"><span>Total</span><span>{money(totals.totalPaise)}</span></div></div> : <p className="text-charcoal/60">Enter a valid pincode to calculate delivery.</p>}<Link href="/cart" className="block mt-6 text-sm text-terracotta hover:underline">Back to cart</Link></aside>
+      </div>
+    </div>
+  )
+}

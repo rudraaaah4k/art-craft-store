@@ -9,7 +9,10 @@ const cartInclude = {
     orderBy: { createdAt: 'asc' as const },
     include: {
       product: {
-        include: { images: { orderBy: { sortOrder: 'asc' as const }, take: 1 } },
+        include: {
+          images: { orderBy: { sortOrder: 'asc' as const }, take: 1 },
+          variants: true,
+        },
       },
       variant: true,
     },

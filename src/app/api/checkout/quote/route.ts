@@ -1,0 +1,16 @@
+import { NextResponse } from 'next/server'
+import { getRequestCart } from '@/lib/cart'
+import { calculateCheckoutTotals } from '@/lib/checkout'
+import { checkoutQuoteSchema } from '@/lib/validation'
+
+export async function POST(request: Request) {
+  const parsed = checkoutQuoteSchema.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid checkout details.' }, { status: 400 })
+  const { cart } = await getRequestCart()
+  if (!cart || cart.items.length === 0) return NextResponse.json({ error: 'Your cart is empty.' }, { status: 400 })
+  try {
+    return NextResponse.json({ totals: await calculateCheckoutTotals(cart, parsed.data) })
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to calculate checkout.' }, { status: 400 })
+  }
+}

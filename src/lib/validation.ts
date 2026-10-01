@@ -25,3 +25,20 @@ export const cartItemSchema = z.object({
 export const cartUpdateSchema = z.object({
   quantity: z.number().int().min(1).max(20),
 })
+
+export const checkoutQuoteSchema = z.object({
+  couponCode: z.string().trim().max(32).optional().default(''),
+  postalCode: z.string().trim().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
+  paymentMethod: z.enum(['RAZORPAY', 'COD']).default('RAZORPAY'),
+})
+
+export const checkoutOrderSchema = checkoutQuoteSchema.extend({
+  email: z.string().trim().email().max(320),
+  fullName: z.string().trim().min(2).max(120),
+  phone: z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit phone number'),
+  line1: z.string().trim().min(3).max(200),
+  line2: z.string().trim().max(200).optional().default(''),
+  city: z.string().trim().min(2).max(100),
+  state: z.string().trim().min(2).max(100),
+  addressId: z.string().trim().min(1).max(100).optional(),
+})
