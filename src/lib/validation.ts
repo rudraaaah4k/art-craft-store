@@ -42,3 +42,12 @@ export const checkoutOrderSchema = checkoutQuoteSchema.extend({
   state: z.string().trim().min(2).max(100),
   addressId: z.string().trim().min(1).max(100).optional(),
 })
+
+export const paymentOrderSchema = z.object({ orderId: z.string().trim().min(1).max(100) })
+
+export const paymentVerifySchema = z.object({
+  orderId: z.string().trim().min(1).max(100),
+  razorpayOrderId: z.string().trim().min(1).max(100),
+  razorpayPaymentId: z.string().trim().min(1).max(100),
+  razorpaySignature: z.string().trim().min(1).max(200),
+})

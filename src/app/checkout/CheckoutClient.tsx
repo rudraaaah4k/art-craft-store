@@ -35,7 +35,38 @@ export function CheckoutClient() {
     const response = await fetch('/api/checkout/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     const data = await response.json()
     if (!response.ok) { setError(data.error); setLoading(false); return }
-    router.push(`/orders/${data.orderId}`)
+    const paymentResponse = await fetch('/api/payments/razorpay/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: data.orderId }) })
+    const payment = await paymentResponse.json()
+    if (!paymentResponse.ok) { setError(payment.error); setLoading(false); return }
+    if (payment.mock) { router.push(`/orders/${data.orderId}`); return }
+
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => {
+      const RazorpayConstructor = (window as unknown as { Razorpay: new (options: Record<string, unknown>) => { open: () => void; on: (event: string, handler: (response: unknown) => void) => void } }).Razorpay
+      const checkout = new RazorpayConstructor({
+        key: payment.keyId,
+        amount: payment.amountPaise,
+        currency: payment.currency,
+        name: 'ArtCraft',
+        description: `Order ${data.orderId}`,
+        order_id: payment.razorpayOrderId,
+        prefill: { name: form.fullName, email: form.email, contact: `+91${form.phone}` },
+        handler: async (paymentResult: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          const verifyResponse = await fetch('/api/payments/razorpay/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: data.orderId, razorpayOrderId: paymentResult.razorpay_order_id, razorpayPaymentId: paymentResult.razorpay_payment_id, razorpaySignature: paymentResult.razorpay_signature }) })
+          if (verifyResponse.ok) router.push(`/orders/${data.orderId}`)
+          else { setError('Payment verification failed.'); setLoading(false) }
+        },
+      })
+      checkout.on('payment.failed', async () => {
+        await fetch('/api/payments/razorpay/failure', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: data.orderId }) })
+        setError('Payment failed. Your stock reservation has been released.')
+        setLoading(false)
+      })
+      checkout.open()
+    }
+    script.onerror = () => { setError('Unable to load Razorpay Checkout.'); setLoading(false) }
+    document.body.appendChild(script)
   }
 
   return (
