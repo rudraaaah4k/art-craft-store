@@ -109,6 +109,18 @@ export async function releaseExpiredReservations(transaction: Prisma.Transaction
   return expired.length
 }
 
+export async function failOrderAndReleaseReservations(transaction: Prisma.TransactionClient | typeof prisma, orderId: string, providerPaymentId?: string) {
+  const reservations = await transaction.stockReservation.findMany({ where: { orderId, status: 'ACTIVE' } })
+  for (const reservation of reservations) {
+    if (reservation.variantId) await transaction.variant.update({ where: { id: reservation.variantId }, data: { stock: { increment: reservation.quantity } } })
+    else await transaction.product.update({ where: { id: reservation.productId }, data: { stock: { increment: reservation.quantity } } })
+    await transaction.stockReservation.update({ where: { id: reservation.id }, data: { status: 'RELEASED', releasedAt: new Date() } })
+  }
+  await transaction.order.update({ where: { id: orderId }, data: { status: 'FAILED', paymentStatus: 'FAILED' } })
+  if (providerPaymentId) await transaction.payment.update({ where: { orderId }, data: { providerPaymentId, status: 'FAILED' } })
+  return reservations.length
+}
+
 export async function assertAndReserveStock(transaction: Prisma.TransactionClient, items: CalculatedTotals['items'], orderId: string, sessionId?: string) {
   await releaseExpiredReservations(transaction)
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000)

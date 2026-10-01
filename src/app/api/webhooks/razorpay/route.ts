@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { settlePayment } from '@/lib/payment-settlement'
 import { razorpayWebhookSchema } from '@/lib/validation'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { failOrderAndReleaseReservations } from '@/lib/checkout'
 
 export async function POST(request: Request) {
   if (!await enforceRateLimit(request, 'razorpay-webhook', 100)) return NextResponse.json({ error: 'Too many webhook attempts.' }, { status: 429 })
@@ -23,12 +24,16 @@ export async function POST(request: Request) {
     throw error
   }
 
-  if (payload.event === 'payment.captured' || payload.event === 'payment.authorized') {
+  if (payload.event === 'payment.captured' || payload.event === 'payment.authorized' || payload.event === 'payment.failed') {
     const entity = payload.payload?.payment?.entity
     if (entity?.id && entity.order_id) {
       const payments = await prisma.payment.findMany({ where: { provider: 'razorpay' } })
       const payment = payments.find((candidate) => candidate.metadata && typeof candidate.metadata === 'object' && 'externalOrderId' in candidate.metadata && candidate.metadata.externalOrderId === entity.order_id)
-      if (payment) await settlePayment({ orderId: payment.orderId, provider: 'razorpay', providerPaymentId: entity.id, metadata: { externalOrderId: entity.order_id, eventId } })
+      if (payment && payload.event === 'payment.failed') {
+        await prisma.$transaction((transaction) => failOrderAndReleaseReservations(transaction, payment.orderId, entity.id))
+      } else if (payment) {
+        await settlePayment({ orderId: payment.orderId, provider: 'razorpay', providerPaymentId: entity.id, metadata: { externalOrderId: entity.order_id, eventId } })
+      }
     }
   }
   return NextResponse.json({ ok: true })

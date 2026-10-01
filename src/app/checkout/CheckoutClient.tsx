@@ -40,7 +40,7 @@ export function CheckoutClient() {
     event.preventDefault()
     setLoading(true)
     setError('')
-    const response = await fetch('/api/checkout/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
+    const response = await fetch('/api/checkout/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, addressId: form.addressId || undefined }) })
     const data = await response.json()
     if (!response.ok) { setError(data.error); setLoading(false); return }
     const paymentResponse = await fetch('/api/payments/razorpay/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId: data.orderId }) })
