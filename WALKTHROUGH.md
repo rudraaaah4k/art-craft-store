@@ -54,8 +54,9 @@
 | A draft product is confirmed absent from /shop, search, and direct /products/[slug] access | PASS | PDP `page.tsx` checks `product.status === 'DRAFT'` and calls `notFound()`. Shop query filters by `status: 'PUBLISHED'`. |
 | Wishlist add/remove works and persists for a logged-in user across reload | PASS | Wishlist API route (`POST`/`DELETE`) and client component (`WishlistClient.tsx`) implemented and tested. Guest gets a "Please log in to save to wishlist" message. |
 | 375px mobile layout has no horizontal scroll or broken elements on any page | PASS | Tailwind classes use `md:` and `sm:` correctly; `ProductInteractive.tsx` sizes appropriately. Navigation is responsive. |
-| Lighthouse mobile report on Home and one Product page | FAIL (Partial) | Target: Perf 85+, SEO 95+, Access 90+. Actual Home: Perf 89, Access 100, Best Practices 96, SEO 100. Actual Product: Perf 78, Access 94, Best Practices 96, SEO 100. (Missed product perf target by a bit, but others met perfectly). |
+| Lighthouse mobile report on Home and one Product page | FAIL (Partial, accepted) | Target: Perf 85+, SEO 95+, Access 90+. Actual Home: Perf 89. Final production Product: Perf 78, Access 94, Best Practices 96, SEO 100. The PDP Performance target remains unmet; this is the final accepted Phase 3 measurement. |
 | `npx tsc --noEmit`, `npm run lint` (zero warnings), `npm run build` all pass | PASS | Executed `tsc` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` (success). |
+| PDP server/client split preserves server-rendered content and lazy-loads gallery thumbnails | PASS | `page.tsx` keeps title, description, reviews, and related products server-rendered; `ProductGallery.tsx` owns gallery state with only the active image prioritized; `ProductActions.tsx` owns variant, wishlist, and delivery interactions. |
 
 ## Migration Summary
 
@@ -65,12 +66,14 @@
 
 - Real Shiprocket integration is stubbed; currently uses mock provider with hardcoded delays.
 - Product reviews are read-only for now; write flow comes in Phase 4 (checkout).
+- The production PDP Lighthouse score is 78 Performance, below the 85 target; no further optimization iteration was performed in this final Phase 3 round.
 
 ## Files Changed
 
 - `src/app/page.tsx`
 - `src/app/shop/page.tsx`, `ShopFilters.tsx`
 - `src/app/products/[slug]/page.tsx`, `ProductInteractive.tsx`
+- `src/app/products/[slug]/ProductGallery.tsx`, `ProductActions.tsx`
 - `src/app/account/wishlist/page.tsx`, `WishlistClient.tsx`
 - `src/app/api/wishlist/route.ts`, `src/app/api/shiprocket/check-pincode/route.ts`
 - Static pages (`about`, `contact`, `shipping-policy`, `return-policy`, `privacy-policy`, `terms`)

@@ -93,11 +93,11 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - **Global Layout:** Added `AuthProvider`, responsive `Header` with mobile menu, and `Footer` with correct links to pages. Added styled `not-found.tsx`.
 - **Home Page:** Added Hero section, Category tiles, Featured Artworks, New Arrivals, and Testimonials. Used `revalidate = 60` for caching while keeping DB data fresh.
 - **Shop Page:** Implemented URL-based filtering (Category, price range, in-stock), sorting (price asc/desc, newest), and search. State persists on reload and browser history via fully controlled URL params.
-- **Product Detail Page (PDP):** Implemented image gallery, variants selector, related products (same category), read-only reviews, and a mock Shiprocket pincode checker.
+- **Product Detail Page (PDP):** Implemented image gallery, variants selector, related products (same category), read-only reviews, and a mock Shiprocket pincode checker. Split gallery and interactive actions into focused client components while keeping the product content server-rendered; the active gallery image is prioritized and thumbnails lazy-load.
 - **Wishlist:** Created `/account/wishlist` page, `WishlistClient` component, and `POST/DELETE` API endpoints for managing user wishlists.
 - **Static Pages:** Implemented About, Contact (with extracted metadata layout), Shipping Policy, Return & Refund Policy, Privacy Policy, and Terms of Service pages.
 - **Constraints Met:** Draft products correctly return 404 and are excluded from Shop/Search. Reused existing design tokens. Used `next/image` exclusively. Placeholder images generated and added to `public/images/`.
-- **Checks:** `npx tsc --noEmit` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` all pass successfully.
+- **Checks:** `npx tsc --noEmit` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` all pass successfully. Final production Lighthouse mobile audit: Home Performance 89; Product Performance 78, Accessibility 94, Best Practices 96, SEO 100. The PDP remains below the 85 Performance target and is accepted as the final Phase 3 measurement.
 
 ### Next
-- Proceed to Phase 4 (Checkout Flow).
+- Await approval to proceed to Phase 4 (Checkout Flow).
