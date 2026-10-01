@@ -16,6 +16,8 @@ export function ProductActions({ product }: { product: ProductData }) {
   
   // Wishlist state
   const [wishlistMsg, setWishlistMsg] = useState('')
+  const [cartMsg, setCartMsg] = useState('')
+  const [cartLoading, setCartLoading] = useState(false)
 
   const activePrice = selectedVariant ? (selectedVariant.price ?? product.price) : (product.salePrice ?? product.price)
   const activeStock = selectedVariant ? selectedVariant.stock : product.stock
@@ -59,6 +61,29 @@ export function ProductActions({ product }: { product: ProductData }) {
       setWishlistMsg('Error adding to wishlist.')
     }
     setTimeout(() => setWishlistMsg(''), 3000)
+  }
+
+  async function addToCart() {
+    setCartLoading(true)
+    setCartMsg('')
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, variantId: selectedVariant?.id ?? null, quantity: 1 }),
+      })
+      const data = await response.json()
+      if (!response.ok) setCartMsg(data.error || 'Unable to add to cart.')
+      else {
+        setCartMsg('Added to cart.')
+        window.dispatchEvent(new Event('cart-updated'))
+      }
+    } catch {
+      setCartMsg('Unable to add to cart.')
+    } finally {
+      setCartLoading(false)
+      setTimeout(() => setCartMsg(''), 3000)
+    }
   }
 
   return (
@@ -110,9 +135,10 @@ export function ProductActions({ product }: { product: ProductData }) {
         <div className="flex gap-4">
           <button 
             disabled={activeStock === 0}
+            onClick={() => void addToCart()}
             className="flex-1 bg-charcoal text-white py-3 font-medium hover:bg-deep-olive transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {activeStock === 0 ? 'Sold Out' : 'Add to Cart'}
+            {activeStock === 0 ? 'Sold Out' : cartLoading ? 'Adding...' : 'Add to Cart'}
           </button>
           <button 
             onClick={addToWishlist}
@@ -124,6 +150,7 @@ export function ProductActions({ product }: { product: ProductData }) {
             </svg>
           </button>
         </div>
+        {cartMsg && <p className="mt-2 text-sm text-deep-olive">{cartMsg}</p>}
         {wishlistMsg && <p className={`mt-2 text-sm ${wishlistMsg.includes('Please log in') ? 'text-terracotta' : 'text-deep-olive'}`}>{wishlistMsg}</p>}
       </div>
 
