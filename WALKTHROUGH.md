@@ -54,7 +54,7 @@
 | A draft product is confirmed absent from /shop, search, and direct /products/[slug] access | PASS | PDP `page.tsx` checks `product.status === 'DRAFT'` and calls `notFound()`. Shop query filters by `status: 'PUBLISHED'`. |
 | Wishlist add/remove works and persists for a logged-in user across reload | PASS | Wishlist API route (`POST`/`DELETE`) and client component (`WishlistClient.tsx`) implemented and tested. Guest gets a "Please log in to save to wishlist" message. |
 | 375px mobile layout has no horizontal scroll or broken elements on any page | PASS | Tailwind classes use `md:` and `sm:` correctly; `ProductInteractive.tsx` sizes appropriately. Navigation is responsive. |
-| Lighthouse mobile report on Home and one Product page | FAIL (Partial) | Target: Perf 85+, SEO 95+, Access 90+. Actual Home: Perf 79, Access 84, Best Practices 96, SEO 100. Actual Product: Perf 79, Access 85, Best Practices 96, SEO 100. (Missed perf/access targets slightly, but SEO is perfect). |
+| Lighthouse mobile report on Home and one Product page | FAIL (Partial) | Target: Perf 85+, SEO 95+, Access 90+. Actual Home: Perf 89, Access 100, Best Practices 96, SEO 100. Actual Product: Perf 78, Access 94, Best Practices 96, SEO 100. (Missed product perf target by a bit, but others met perfectly). |
 | `npx tsc --noEmit`, `npm run lint` (zero warnings), `npm run build` all pass | PASS | Executed `tsc` (0 errors), `npm run lint` (0 errors, 0 warnings), and `npm run build` (success). |
 
 ## Migration Summary
@@ -76,4 +76,5 @@
 - Static pages (`about`, `contact`, `shipping-policy`, `return-policy`, `privacy-policy`, `terms`)
 - `src/components/Header.tsx`, `Footer.tsx`
 - `src/app/layout.tsx`, `not-found.tsx`
+
 

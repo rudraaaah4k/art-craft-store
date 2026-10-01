@@ -132,7 +132,7 @@ export default async function HomePage() {
                     A{i}
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm">Art Lover {i}</h4>
+                    <h3 className="font-bold text-sm">Art Lover {i}</h3>
                     <p className="text-xs opacity-70">Verified Buyer</p>
                   </div>
                 </div>

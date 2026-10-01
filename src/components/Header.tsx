@@ -33,14 +33,14 @@ export function Header() {
                 placeholder="Search..." 
                 className="pl-3 pr-10 py-1 border border-sand bg-white text-sm focus:outline-none focus:border-terracotta rounded-full text-charcoal"
               />
-              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/50 hover:text-terracotta">
+              <button type="submit" aria-label="Search" className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/50 hover:text-terracotta">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
               </button>
             </form>
 
-            <Link href="/cart" className="text-charcoal hover:text-terracotta relative">
+            <Link href="/cart" aria-label="Shopping Cart" className="text-charcoal hover:text-terracotta relative">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
@@ -51,7 +51,7 @@ export function Header() {
 
             {session ? (
               <div className="relative group">
-                <button className="text-charcoal hover:text-terracotta flex items-center gap-1">
+                <button aria-label="User Account" className="text-charcoal hover:text-terracotta flex items-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                   </svg>
@@ -72,12 +72,12 @@ export function Header() {
           </div>
           
           <div className="md:hidden flex items-center space-x-4">
-            <Link href="/cart" className="text-charcoal relative">
+            <Link href="/cart" aria-label="Shopping Cart" className="text-charcoal relative">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
             </Link>
-            <button onClick={() => setMenuOpen(!menuOpen)} className="text-charcoal">
+            <button aria-label="Toggle mobile menu" onClick={() => setMenuOpen(!menuOpen)} className="text-charcoal">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
               </svg>
