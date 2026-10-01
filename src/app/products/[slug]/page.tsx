@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { ProductInteractive } from './ProductInteractive'
+import { ProductGallery } from './ProductGallery'
+import { ProductActions } from './ProductActions'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Metadata } from 'next'
@@ -58,7 +59,21 @@ export default async function ProductPage(
       </div>
 
       {/* Main Product Area */}
-      <ProductInteractive product={product} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <ProductGallery images={product.images} title={product.title} />
+        
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-serif font-bold text-charcoal mb-2">{product.title}</h1>
+          
+          {product.isMadeToOrder && (
+            <div className="mb-4 inline-flex">
+              <span className="bg-deep-olive text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Made to Order</span>
+            </div>
+          )}
+
+          <ProductActions product={product} />
+        </div>
+      </div>
 
       {/* Product Description */}
       <div className="mt-16 border-t border-sand pt-12">
