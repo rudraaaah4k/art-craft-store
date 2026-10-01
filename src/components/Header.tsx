@@ -76,6 +76,8 @@ export function Header() {
                       <Link href="/admin" className="px-3 py-2 hover:bg-cream hover:text-terracotta rounded">Admin Dashboard</Link>
                     )}
                     <Link href="/account/wishlist" className="px-3 py-2 hover:bg-cream hover:text-terracotta rounded">Wishlist</Link>
+                    <Link href="/account/orders" className="px-3 py-2 hover:bg-cream hover:text-terracotta rounded">Orders</Link>
+                    <Link href="/account/addresses" className="px-3 py-2 hover:bg-cream hover:text-terracotta rounded">Addresses</Link>
                     <button onClick={() => signOut({ callbackUrl: '/' })} className="px-3 py-2 text-left hover:bg-cream hover:text-terracotta rounded w-full">Logout</button>
                   </div>
                 </div>
@@ -114,6 +116,8 @@ export function Header() {
             {session ? (
               <>
                 <Link href="/account/wishlist" onClick={() => setMenuOpen(false)} className="text-charcoal font-medium">Wishlist</Link>
+                <Link href="/account/orders" onClick={() => setMenuOpen(false)} className="text-charcoal font-medium">Orders</Link>
+                <Link href="/account/addresses" onClick={() => setMenuOpen(false)} className="text-charcoal font-medium">Addresses</Link>
                 {session.user.role === 'ADMIN' && <Link href="/admin" className="text-terracotta font-medium">Admin</Link>}
                 <button onClick={() => signOut({ callbackUrl: '/' })} className="text-left text-charcoal font-medium">Logout</button>
               </>

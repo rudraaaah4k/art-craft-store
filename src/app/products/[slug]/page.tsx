@@ -5,6 +5,7 @@ import { ProductActions } from './ProductActions'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Metadata } from 'next'
+import { ReviewForm } from './ReviewForm'
 
 export async function generateMetadata(
   props: { params: Promise<{ slug: string }> }
@@ -28,7 +29,7 @@ export default async function ProductPage(
       category: true,
       images: { orderBy: { sortOrder: 'asc' } },
       variants: true,
-      reviews: { orderBy: { createdAt: 'desc' }, take: 5, include: { user: { select: { name: true } } } }
+      reviews: { where: { isVisible: true }, orderBy: { createdAt: 'desc' }, take: 5, include: { user: { select: { name: true } } } }
     }
   })
 
@@ -115,6 +116,7 @@ export default async function ProductPage(
             ))}
           </div>
         )}
+        <ReviewForm productId={product.id} />
       </div>
 
       {/* Related Products */}

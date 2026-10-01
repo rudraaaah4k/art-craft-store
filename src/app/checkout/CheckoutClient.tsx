@@ -5,15 +5,23 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 type Totals = { subtotalPaise: number; discountPaise: number; shippingPaise: number; gstPaise: number; codFeePaise: number; totalPaise: number; codAllowed: boolean }
+type SavedAddress = { id: string; label: string | null; fullName: string; phone: string; line1: string; line2: string | null; city: string; state: string; postalCode: string }
 
 const money = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN')}`
 
 export function CheckoutClient() {
-  const [form, setForm] = useState({ email: '', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', postalCode: '', couponCode: '', paymentMethod: 'RAZORPAY' as 'RAZORPAY' | 'COD' })
+  const [form, setForm] = useState({ email: '', fullName: '', phone: '', line1: '', line2: '', city: '', state: '', postalCode: '', couponCode: '', addressId: '', paymentMethod: 'RAZORPAY' as 'RAZORPAY' | 'COD' })
   const [totals, setTotals] = useState<Totals | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
   const router = useRouter()
+
+  useEffect(() => { const timer = window.setTimeout(() => { void fetch('/api/addresses').then(async (response) => { if (response.ok) setSavedAddresses(await response.json()) }) }, 0); return () => window.clearTimeout(timer) }, [])
+
+  function selectAddress(address: SavedAddress) {
+    setForm({ ...form, addressId: address.id, fullName: address.fullName, phone: address.phone, line1: address.line1, line2: address.line2 ?? '', city: address.city, state: address.state, postalCode: address.postalCode })
+  }
 
   useEffect(() => {
     if (!/^\d{6}$/.test(form.postalCode)) return
@@ -74,6 +82,7 @@ export function CheckoutClient() {
       <h1 className="text-3xl font-serif font-bold mb-8">Checkout</h1>
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <form onSubmit={submitOrder} className="space-y-5">
+          {savedAddresses.length > 0 && <div className="border border-sand bg-white p-4"><label className="text-sm font-medium">Use a saved address<select onChange={(event) => { const address = savedAddresses.find((item) => item.id === event.target.value); if (address) selectAddress(address) }} className="mt-1 w-full border border-sand p-3"><option value="">Choose address</option>{savedAddresses.map((address) => <option key={address.id} value={address.id}>{address.label || address.fullName} · {address.postalCode}</option>)}</select></label></div>}
           <div className="grid gap-4 sm:grid-cols-2">
             {([['email', 'Email', 'email'], ['fullName', 'Full name', 'text'], ['phone', 'Phone', 'tel'], ['postalCode', 'Pincode', 'text'], ['city', 'City', 'text'], ['state', 'State', 'text']] as const).map(([name, label, type]) => <label key={name} className="text-sm font-medium">{label}<input required type={type} value={form[name]} onChange={(event) => setForm({ ...form, [name]: event.target.value })} className="mt-1 w-full border border-sand p-3 bg-white" /></label>)}
           </div>
