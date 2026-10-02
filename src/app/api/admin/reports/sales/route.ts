@@ -74,7 +74,9 @@ export async function GET(request: Request) {
   if (format === 'csv') {
     const columns = ['period', 'orders', 'revenueRupees', 'discountRupees', 'shippingRupees', 'gstRupees']
     const csv = toCsv(rows as unknown as Record<string, unknown>[], columns)
-    return new NextResponse(csv, {
+    // Return explicit UTF-8 bytes so Excel sees the BOM (Response.text() strips BOM when decoding).
+    const bytes = new TextEncoder().encode(csv)
+    return new NextResponse(bytes, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="sales-report-${groupBy}.csv"`,

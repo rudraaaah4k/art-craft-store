@@ -75,7 +75,8 @@ export async function GET(request: Request) {
   if (format === 'csv') {
     const columns = ['name', 'email', 'phone', 'totalOrders', 'paidOrders', 'totalSpentRupees', 'memberSince']
     const csv = toCsv(rows as unknown as Record<string, unknown>[], columns)
-    return new NextResponse(csv, {
+    const bytes = new TextEncoder().encode(csv)
+    return new NextResponse(bytes, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': 'attachment; filename="customers.csv"',

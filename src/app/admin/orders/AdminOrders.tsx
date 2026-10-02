@@ -4,7 +4,18 @@ import { useEffect, useState } from 'react'
 
 type CourierRate = { id: string; courierName: string; amountPaise: number; estimatedDays: number; chargeableWeightGrams: number }
 type Shipment = { id: string; trackingNumber: string | null; status: string; ratePaise: number; labelUrl: string | null; metadata: unknown }
-type AdminOrder = { id: string; email: string; status: string; paymentStatus: string; totalPaise: number; shippingPostalCode: string; createdAt: string; items: Array<{ title: string; quantity: number }>; shipment: Shipment | null }
+type AdminOrder = {
+  id: string
+  email: string
+  status: string
+  paymentStatus: string
+  totalPaise: number
+  shippingPostalCode: string
+  createdAt: string
+  items: Array<{ title: string; quantity: number }>
+  shipment: Shipment | null
+  payment: { id: string; status: string; amountPaise: number } | null
+}
 const nextStatus: Record<string, string> = { PACKED: 'SHIPPED', SHIPPED: 'OUT_FOR_DELIVERY', OUT_FOR_DELIVERY: 'DELIVERED' }
 
 const money = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN')}`
@@ -156,7 +167,7 @@ export function AdminOrders() {
                       <a href={`/api/admin/orders/${order.id}/invoice`} target="_blank" className="text-[#4a5d3a] hover:underline">
                         Invoice
                       </a>
-                      {['PAID', 'AUTHORIZED', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
+                      {order.payment && ['PAID', 'AUTHORIZED', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
                         <button onClick={() => void issueRefund(order.id, order.paymentStatus)} disabled={busy} className="text-[#a94e28] hover:underline disabled:opacity-50">
                           Refund
                         </button>
