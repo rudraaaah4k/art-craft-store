@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
+import { ShipmentTracking } from '@/components/ShipmentTracking'
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const order = await prisma.order.findUnique({ where: { id }, include: { items: true, payment: true } })
+  const order = await prisma.order.findUnique({ where: { id }, include: { items: true, payment: true, shipment: true } })
   if (!order) notFound()
 
   return (
@@ -18,6 +19,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
           <div className="border-t border-sand pt-3 flex justify-between font-bold"><span>Total</span><span>₹{(order.totalPaise / 100).toLocaleString('en-IN')}</span></div>
         </div>
         <p className="mt-6 text-sm text-charcoal/70">A confirmation email has been queued for {order.email}.</p>
+        {order.shipment && <ShipmentTracking shipment={order.shipment} />}
         <Link href="/shop" className="inline-block mt-8 bg-charcoal text-white px-5 py-3">Continue shopping</Link>
       </div>
     </div>

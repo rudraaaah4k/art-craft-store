@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 type CourierRate = { id: string; courierName: string; amountPaise: number; estimatedDays: number; chargeableWeightGrams: number }
 type Shipment = { id: string; trackingNumber: string | null; status: string; ratePaise: number; labelUrl: string | null; metadata: unknown }
 type AdminOrder = { id: string; email: string; status: string; paymentStatus: string; totalPaise: number; shippingPostalCode: string; createdAt: string; items: Array<{ title: string; quantity: number }>; shipment: Shipment | null }
+const nextStatus: Record<string, string> = { PACKED: 'SHIPPED', SHIPPED: 'OUT_FOR_DELIVERY', OUT_FOR_DELIVERY: 'DELIVERED' }
 
 const money = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN')}`
 
@@ -73,6 +74,27 @@ export function AdminOrders() {
     }
   }
 
+  async function simulateScan(orderId: string, status: string) {
+    setBusy(true)
+    setError('')
+    setMessage('')
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || 'Unable to update mock tracking status.')
+      setMessage(`Mock courier scan updated to ${status.replaceAll('_', ' ').toLowerCase()}.`)
+      await loadOrders()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to update mock tracking status.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <section className="rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-5 sm:p-7">
       <div className="mb-6">
@@ -98,6 +120,7 @@ export function AdminOrders() {
                       <p className="font-semibold">{typeof shipmentMeta.courierName === 'string' ? shipmentMeta.courierName : 'Mock Courier'}</p>
                       <p>{order.shipment.status} · AWB {order.shipment.trackingNumber}</p>
                       {order.shipment.labelUrl && <a className="text-[#a94e28] underline" href={order.shipment.labelUrl}>Download mock label</a>}
+                      {nextStatus[order.shipment.status] && <button disabled={busy} onClick={() => void simulateScan(order.id, nextStatus[order.shipment!.status])} className="mt-2 block rounded-md border border-[#c9b79f] px-3 py-2 text-xs font-semibold hover:bg-[#f0e6d8] disabled:opacity-60">Simulate {nextStatus[order.shipment.status].replaceAll('_', ' ').toLowerCase()} scan</button>}
                     </div>
                   ) : !['PAID', 'AUTHORIZED'].includes(order.paymentStatus) ? (
                     <span className="text-sm text-[#8a684b]">Payment required</span>

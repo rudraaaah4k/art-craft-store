@@ -104,3 +104,7 @@ export const shippingServiceabilitySchema = z.object({
 export const createMockShipmentSchema = z.object({
   courierId: z.string().trim().min(1).max(120),
 })
+
+export const mockShipmentStatusSchema = z.object({
+  status: z.enum(['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED']),
+})
