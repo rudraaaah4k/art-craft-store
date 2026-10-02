@@ -25,21 +25,33 @@ export default function AdminCustomers() {
   const [data, setData] = useState<CustomersData | null>(null)
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(true)
-    fetch(`/api/admin/customers?page=${page}`)
+    let cancelled = false
+    const controller = new AbortController()
+
+    fetch(`/api/admin/customers?page=${page}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error('Unable to load customers data')
         return res.json()
       })
-      .then((res) => {
+      .then((res: CustomersData) => {
+        if (cancelled) return
         setData(res)
         setError('')
+        setLoading(false)
       })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
+      .catch((err: unknown) => {
+        if (cancelled || (err instanceof DOMException && err.name === 'AbortError')) return
+        setError(err instanceof Error ? err.message : 'Unable to load customers data')
+        setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
   }, [page])
 
   if (error) return <div className="p-4 text-[#a94e28]">{error}</div>
@@ -94,8 +106,11 @@ export default function AdminCustomers() {
       {data && data.pages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
+            onClick={() => {
+              setLoading(true)
+              setPage((p) => Math.max(1, p - 1))
+            }}
+            disabled={page === 1 || loading}
             className="rounded border border-[#d8c7b1] px-3 py-1 disabled:opacity-50"
           >
             Prev
@@ -104,8 +119,11 @@ export default function AdminCustomers() {
             Page {page} of {data.pages}
           </span>
           <button
-            onClick={() => setPage((p) => Math.min(data.pages, p + 1))}
-            disabled={page === data.pages}
+            onClick={() => {
+              setLoading(true)
+              setPage((p) => Math.min(data.pages, p + 1))
+            }}
+            disabled={page === data.pages || loading}
             className="rounded border border-[#d8c7b1] px-3 py-1 disabled:opacity-50"
           >
             Next
