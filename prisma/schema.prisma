@@ -357,6 +357,15 @@ model Wishlist {
 model Settings {
   id                    String   @id @default(cuid())
   key                   String   @unique
+  pickupName            String?
+  pickupEmail           String?
+  pickupPhone           String?
+  pickupAddressLine1    String?
+  pickupAddressLine2    String?
+  pickupCity            String?
+  pickupState           String?
+  pickupPostalCode      String?
+  pickupCountry         String   @default("India")
   currency              String   @default("INR")
   gstPercent            Int      @default(12)
   freeShippingThreshold Int      @default(99900)

@@ -3,6 +3,7 @@ import { requireAdminPage } from '@/lib/admin'
 
 const navItems = [
   { href: '/admin', label: 'Catalog', help: 'Manage products, categories, and coupons' },
+  { href: '/admin/shipping', label: 'Shipping', help: 'Configure shipment pickup details' },
 ]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

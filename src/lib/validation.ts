@@ -79,3 +79,15 @@ export const reviewSchema = z.object({
   title: z.string().trim().max(120).optional().default(''),
   body: z.string().trim().max(2000).optional().default(''),
 })
+
+export const pickupAddressSchema = z.object({
+  pickupName: z.string().trim().min(2).max(120),
+  pickupEmail: z.string().trim().email().max(320),
+  pickupPhone: z.string().trim().regex(/^[6-9]\d{9}$/, 'Enter a valid 10-digit Indian phone number'),
+  pickupAddressLine1: z.string().trim().min(3).max(200),
+  pickupAddressLine2: z.string().trim().max(200).optional().default(''),
+  pickupCity: z.string().trim().min(2).max(100),
+  pickupState: z.string().trim().min(2).max(100),
+  pickupPostalCode: z.string().trim().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
+  pickupCountry: z.string().trim().min(2).max(80).default('India'),
+})
