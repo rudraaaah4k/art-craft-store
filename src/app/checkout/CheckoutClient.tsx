@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-type Totals = { subtotalPaise: number; discountPaise: number; shippingPaise: number; gstPaise: number; codFeePaise: number; totalPaise: number; codAllowed: boolean }
+type Totals = { subtotalPaise: number; discountPaise: number; shippingPaise: number; gstPaise: number; codFeePaise: number; totalPaise: number; codAllowed: boolean; weightGrams: number; courierName: string; estimatedDeliveryDays: number }
 type SavedAddress = { id: string; label: string | null; fullName: string; phone: string; line1: string; line2: string | null; city: string; state: string; postalCode: string }
 
 const money = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN')}`
@@ -24,12 +24,16 @@ export function CheckoutClient() {
   }
 
   useEffect(() => {
-    if (!/^\d{6}$/.test(form.postalCode)) return
     const timer = window.setTimeout(() => {
+      if (!/^\d{6}$/.test(form.postalCode)) {
+        setTotals(null)
+        setError(form.postalCode ? 'Enter a valid 6-digit pincode to check delivery.' : '')
+        return
+      }
       void fetch('/api/checkout/quote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ postalCode: form.postalCode, couponCode: form.couponCode, paymentMethod: form.paymentMethod }) })
         .then(async (response) => {
           const data = await response.json()
-          if (!response.ok) setError(data.error)
+          if (!response.ok) { setTotals(null); setError(data.error) }
           else { setTotals(data.totals); setError('') }
         })
     }, 350)
@@ -93,7 +97,7 @@ export function CheckoutClient() {
           {error && <p className="text-terracotta">{error}</p>}
           <button disabled={loading || !totals} className="bg-terracotta text-white px-6 py-3 font-medium disabled:opacity-50">{loading ? 'Creating order...' : 'Place order'}</button>
         </form>
-        <aside className="border border-sand bg-white p-6 h-fit"><h2 className="font-serif text-xl font-bold mb-5">Order Summary</h2>{totals ? <div className="space-y-3 text-sm"><div className="flex justify-between"><span>Subtotal</span><span>{money(totals.subtotalPaise)}</span></div><div className="flex justify-between"><span>GST included</span><span>{money(totals.gstPaise)}</span></div><div className="flex justify-between"><span>Shipping</span><span>{money(totals.shippingPaise)}</span></div>{totals.discountPaise > 0 && <div className="flex justify-between text-deep-olive"><span>Discount</span><span>-{money(totals.discountPaise)}</span></div>}{totals.codFeePaise > 0 && <div className="flex justify-between"><span>COD fee</span><span>{money(totals.codFeePaise)}</span></div>}<div className="border-t border-sand pt-3 flex justify-between font-bold text-lg"><span>Total</span><span>{money(totals.totalPaise)}</span></div></div> : <p className="text-charcoal/60">Enter a valid pincode to calculate delivery.</p>}<Link href="/cart" className="block mt-6 text-sm text-terracotta hover:underline">Back to cart</Link></aside>
+        <aside className="border border-sand bg-white p-6 h-fit"><h2 className="font-serif text-xl font-bold mb-5">Order Summary</h2>{totals ? <div className="space-y-3 text-sm"><div className="flex justify-between"><span>Subtotal</span><span>{money(totals.subtotalPaise)}</span></div><div className="flex justify-between"><span>GST included</span><span>{money(totals.gstPaise)}</span></div><div className="flex justify-between"><span>Shipping · {totals.courierName}, {totals.estimatedDeliveryDays} days</span><span>{money(totals.shippingPaise)}</span></div>{totals.discountPaise > 0 && <div className="flex justify-between text-deep-olive"><span>Discount</span><span>-{money(totals.discountPaise)}</span></div>}{totals.codFeePaise > 0 && <div className="flex justify-between"><span>COD fee</span><span>{money(totals.codFeePaise)}</span></div>}<div className="border-t border-sand pt-3 flex justify-between font-bold text-lg"><span>Total</span><span>{money(totals.totalPaise)}</span></div><p className="text-xs text-charcoal/60">Mock estimate · {totals.weightGrams} g total weight</p></div> : <p className="text-charcoal/60">Enter a valid pincode to calculate delivery.</p>}<Link href="/cart" className="block mt-6 text-sm text-terracotta hover:underline">Back to cart</Link></aside>
       </div>
     </div>
   )

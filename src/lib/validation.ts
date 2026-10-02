@@ -91,3 +91,12 @@ export const pickupAddressSchema = z.object({
   pickupPostalCode: z.string().trim().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
   pickupCountry: z.string().trim().min(2).max(80).default('India'),
 })
+
+export const shippingServiceabilitySchema = z.object({
+  postalCode: z.string().trim().regex(/^\d{6}$/, 'Enter a valid 6-digit pincode'),
+  weightGrams: z.coerce.number().int().min(0).max(100000),
+  amountPaise: z.coerce.number().int().min(0).max(100000000),
+  lengthCm: z.coerce.number().positive().max(300).optional(),
+  widthCm: z.coerce.number().positive().max(300).optional(),
+  heightCm: z.coerce.number().positive().max(300).optional(),
+})

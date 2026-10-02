@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client'
-import { getShippingProvider } from '@/lib/providers/shipping'
+import { getShippingProvider, type PackageDimensions } from '@/lib/providers/shipping'
 import { prisma } from '@/lib/prisma'
 
 type CartWithItems = Prisma.CartGetPayload<{
@@ -27,6 +27,9 @@ export type CalculatedTotals = {
   codFeePaise: number
   totalPaise: number
   weightGrams: number
+  dimensionsCm?: PackageDimensions
+  courierName: string
+  estimatedDeliveryDays: number
   couponCode: string | null
   codAllowed: boolean
   items: Array<{
@@ -48,6 +51,10 @@ export async function calculateCheckoutTotals(cart: CartWithItems, details: Chec
   let subtotalPaise = 0
   let gstPaise = 0
   let weightGrams = 0
+  let packageLengthCm = 0
+  let packageWidthCm = 0
+  let packageHeightCm = 0
+  let hasCompleteDimensions = true
   let codAllowed = Boolean(settings?.codEnabled ?? true)
   const items: CalculatedTotals['items'] = []
 
@@ -61,6 +68,13 @@ export async function calculateCheckoutTotals(cart: CartWithItems, details: Chec
     subtotalPaise += lineTotalPaise
     gstPaise += Math.round(lineTotalPaise * product.gstPercent / (100 + product.gstPercent))
     weightGrams += product.weightGrams * item.quantity
+    if (product.lengthCm && product.widthCm && product.heightCm) {
+      packageLengthCm = Math.max(packageLengthCm, product.lengthCm)
+      packageWidthCm = Math.max(packageWidthCm, product.widthCm)
+      packageHeightCm += product.heightCm * item.quantity
+    } else {
+      hasCompleteDimensions = false
+    }
     codAllowed = codAllowed && product.codAllowed && !product.isMadeToOrder
     items.push({
       cartItemId: item.id,
@@ -89,14 +103,30 @@ export async function calculateCheckoutTotals(cart: CartWithItems, details: Chec
     couponCode = coupon.code
   }
 
-  const shippingRates = await getShippingProvider().getRates({ postalCode: details.postalCode, weightGrams, amountPaise: subtotalPaise - discountPaise })
-  const shippingPaise = shippingRates[0]?.amountPaise ?? 0
+  const dimensionsCm = hasCompleteDimensions && packageLengthCm > 0 && packageWidthCm > 0 && packageHeightCm > 0
+    ? { lengthCm: packageLengthCm, widthCm: packageWidthCm, heightCm: packageHeightCm }
+    : undefined
+  let shippingRates
+  try {
+    shippingRates = await getShippingProvider().getRates({
+      postalCode: details.postalCode,
+      weightGrams,
+      amountPaise: subtotalPaise - discountPaise,
+      freeShippingThresholdPaise: settings?.freeShippingThreshold ?? 99900,
+      dimensionsCm,
+    })
+  } catch {
+    throw new Error('Delivery estimate is temporarily unavailable. Please retry shortly.')
+  }
+  if (shippingRates.length === 0) throw new Error(`Delivery is unavailable for pincode ${details.postalCode}. Try another pincode.`)
+  const selectedRate = shippingRates.reduce((lowest, rate) => rate.amountPaise < lowest.amountPaise ? rate : lowest)
+  const shippingPaise = selectedRate.amountPaise
   const codFeePaise = details.paymentMethod === 'COD' ? (settings?.codFeePaise ?? 500) : 0
   const totalPaise = Math.max(0, subtotalPaise - discountPaise + shippingPaise + codFeePaise)
   const codMaxPaise = settings?.codMaxPaise ?? 300000
   if (details.paymentMethod === 'COD' && (!codAllowed || totalPaise > codMaxPaise)) throw new Error('Cash on Delivery is not available for this order.')
 
-  return { subtotalPaise, discountPaise, shippingPaise, gstPaise, codFeePaise, totalPaise, weightGrams, couponCode, codAllowed: codAllowed && totalPaise <= codMaxPaise, items }
+  return { subtotalPaise, discountPaise, shippingPaise, gstPaise, codFeePaise, totalPaise, weightGrams, dimensionsCm, courierName: selectedRate.courierName, estimatedDeliveryDays: selectedRate.estimatedDays, couponCode, codAllowed: codAllowed && totalPaise <= codMaxPaise, items }
 }
 
 export async function releaseExpiredReservations(transaction: Prisma.TransactionClient | typeof prisma) {

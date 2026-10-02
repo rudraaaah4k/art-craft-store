@@ -29,12 +29,18 @@ export function ProductActions({ product }: { product: ProductData }) {
     
     setDeliveryStatus({ loading: true, msg: 'Checking...' })
     try {
-      const res = await fetch(`/api/shiprocket/check-pincode?pincode=${pincode}&weight=${product.weightGrams}`)
+      const params = new URLSearchParams({ pincode, weight: String(product.weightGrams), amount: String(activePrice) })
+      if (product.lengthCm && product.widthCm && product.heightCm) {
+        params.set('length', String(product.lengthCm))
+        params.set('width', String(product.widthCm))
+        params.set('height', String(product.heightCm))
+      }
+      const res = await fetch(`/api/shiprocket/check-pincode?${params}`)
       const data = await res.json()
       if (res.ok && data.available) {
-        setDeliveryStatus({ loading: false, msg: `Delivery in ${product.processingDays + (data.etdDays || 3)} days. Cash on Delivery ${product.codAllowed && data.codAvailable ? 'Available' : 'Unavailable'}.`, error: false })
+        setDeliveryStatus({ loading: false, msg: `Delivery in ${product.processingDays + (data.estimatedDays || 3)} days. ${data.rates?.[0]?.courierName ?? 'Delivery'} from ₹${((data.rates?.[0]?.amountPaise ?? 0) / 100).toLocaleString('en-IN')}. Cash on Delivery ${product.codAllowed && data.codAvailable ? 'Available' : 'Unavailable'}.`, error: false })
       } else {
-        setDeliveryStatus({ loading: false, msg: 'Delivery not available to this pincode.', error: true })
+        setDeliveryStatus({ loading: false, msg: data.error || 'Delivery not available to this pincode.', error: true })
       }
     } catch {
       setDeliveryStatus({ loading: false, msg: 'Error checking delivery.', error: true })
