@@ -138,3 +138,24 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - `64d1b4a fix: mark abandoned payments failed`
 - `3e0b8c9 test: add signed razorpay webhook script`
 - Final verification commit: `phase-4: final verification`
+
+## Phase 5: Shiprocket-Compatible Mock Shipping
+
+### Done
+
+- **Pickup settings:** Extended the existing Settings row with pickup contact/address fields, a role-checked and Zod-validated admin API, and an admin Shipping settings page. Migration `20261002104100_phase5_pickup_address` was applied.
+- **Serviceability and rates:** Replaced the hardcoded pincode mock route with the existing provider interface. Mock quotes use aggregated order weight, package dimensions where present, free-shipping configuration, two courier options, ETA, and COD availability. Invalid/unserviceable pincode responses are explicit; provider failures return a friendly retry message.
+- **Mock shipment flow:** Admin can list orders, review mock courier rates, select a courier, create a shipment, receive a mock AWB, generate a downloadable SVG label, and schedule a mock pickup. Shipment validation names each product and missing field.
+- **Status and tracking:** Admin can simulate Packed → Shipped → Out for Delivery → Delivered scans. Shipment/order/fulfillment status and timestamped timeline update together; repeated status updates do not append duplicate events. Guest and logged-in order details show courier, AWB, status, timeline, and tracking link.
+- **Token lifecycle:** Mock Shiprocket auth session models the documented 240-hour lifetime and retries once after expiration/401. Real Shiprocket operations are clearly disabled stubs; this phase made no external Shiprocket calls or charges.
+- **Verification scripts:** `scripts/test-mock-shipping-auth.ts` passed expiry and unauthorized retry checks.
+- **Final gates:** `npx tsc --noEmit`, `npm run lint` (zero warnings), and `npm run build` pass.
+
+### Commits
+
+- `7fd6f3f phase-5a: pickup settings`
+- `06861ff phase-5b: mock serviceability rates`
+- `362e1e8 phase-5c: mock shipment flow`
+- `4b9580a fix: separate mock courier rates from free shipping`
+- `4231b22 phase-5d: mock status sync+tracking`
+- `phase-5: final verification`

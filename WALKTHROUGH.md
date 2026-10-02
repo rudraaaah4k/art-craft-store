@@ -123,4 +123,50 @@
 - `src/components/Header.tsx`, `.env.example`
 - `scripts/test-webhook.ts`
 
+# Phase 5 Walkthrough
+
+## Scope and Safety
+
+Phase 5 was completed against the mock shipping provider only. Shiprocket has no sandbox available for this account, and there is no Shiprocket account/API user configured. Real API operations are disabled stubs; no real orders, AWBs, labels, pickup requests, or shipping charges were created.
+
+## Acceptance Criteria
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| Admin pickup address is configurable and persisted | PASS | Admin Shipping page saved a synthetic pickup address; GET returned it after reload. Synthetic values were subsequently cleared. Migration `20261002104100_phase5_pickup_address` applied successfully. |
+| Missing product weight/dimensions block shipment with item and field names | PASS | Admin courier listing for the delivered test order returned `Cannot create shipment: "Vintage Sci-Fi Poster" is missing weightGrams, lengthCm, widthCm, heightCm.` No shipment was created by that attempt. |
+| Invalid/unserviceable checkout pincode is handled gracefully | PASS | `/api/shiprocket/check-pincode` returned HTTP 400 `Enter a valid 6-digit pincode` for malformed input and HTTP 200 `{available:false,...}` for `990001`. Checkout returned HTTP 400 `Delivery is unavailable for pincode 990001. Try another pincode.` |
+| Courier options show rates and ETA using total package weight/dimensions | PASS (mock) | Two courier choices were shown: Mock Surface ₹124/5 days and Mock Priority ₹164/3 days for 1,300g. Package envelope was 20 × 18 × 6 cm. |
+| Admin can create a shipment with courier, AWB, label, and pickup schedule | PASS (mock) | Selected Mock Surface; UI reported AWB `MOCK46BE57D4C2A6` and pickup scheduled. Database persisted shipment and pickup timestamp. Label route returned HTTP 200, `image/svg+xml`, attachment filename `mock-label-cmuquu644000044vbzs15mwgt.svg`. |
+| Shipment status updates Order and is customer-visible | PASS (mock) | Admin scan actions returned 200 for SHIPPED, OUT_FOR_DELIVERY, DELIVERED. Order reached DELIVERED/FULFILLED; repeated DELIVERED left a single timeline entry. Customer `/tracking/MOCK46BE57D4C2A6` showed courier, AWB, Delivered, and all four timestamped stages. |
+| Expired auth token refreshes without manual intervention | PASS (mock lifecycle) | `npx tsx scripts/test-mock-shipping-auth.ts` reported refresh counts 1 → 2 after expiry → 3 after simulated 401, with rate results returned after both retries. |
+| Real Shiprocket shipment creation | NOT APPLICABLE in mock-only scope | Real calls are disabled stubs. Requires future Shiprocket API credentials/account and explicit authorization before any potentially charge-incurring live shipment. |
+| `npx tsc --noEmit`, `npm run lint`, `npm run build` | PASS | Final TypeScript, zero-warning ESLint, and production build all pass. |
+
+## Known Limits
+
+- Mock serviceability and courier fees are deterministic test estimates, not Shiprocket quotes.
+- Mock AWBs and SVG labels are not courier-valid documents.
+- Real Shiprocket API user, auth transport, shipment booking, courier AWB/label/pickup, webhook or polling integration remain disabled stubs pending account credentials and approval to use a real account.
+- Reservation cleanup still requires deployment cron scheduling.
+
+## Files Changed
+
+- `prisma/schema.prisma`, `prisma/migrations/20261002104100_phase5_pickup_address/migration.sql`
+- `src/lib/providers/shipping.ts`, `src/lib/shipping-orders.ts`, `src/lib/validation.ts`, `src/lib/checkout.ts`
+- `src/app/admin/shipping/*`, `src/app/admin/orders/*`, `src/app/admin/layout.tsx`
+- `src/app/api/admin/settings/shipping/route.ts`, `src/app/api/admin/orders/*`, `src/app/api/shiprocket/check-pincode/route.ts`
+- `src/app/tracking/[awb]/page.tsx`, `src/components/ShipmentTracking.tsx`
+- `src/app/orders/[id]/page.tsx`, `src/app/account/orders/[id]/page.tsx`
+- `scripts/test-mock-shipping-auth.ts`
+
+## Incremental Commits
+
+- `7fd6f3f phase-5a: pickup settings`
+- `06861ff phase-5b: mock serviceability rates`
+- `362e1e8 phase-5c: mock shipment flow`
+- `4b9580a fix: separate mock courier rates from free shipping`
+- `4231b22 phase-5d: mock status sync+tracking`
+- `phase-5: final verification`
+
 
