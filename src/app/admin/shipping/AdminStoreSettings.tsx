@@ -90,7 +90,7 @@ export function AdminStoreSettings() {
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8a684b]">Configuration</p>
         <h2 className="mt-1 font-serif text-2xl text-[#4a5d3a]">Store Settings</h2>
-        <p className="mt-2 max-w-2xl text-sm text-[#5b554d]">Configure your store's identity, taxes, and commerce rules.</p>
+        <p className="mt-2 max-w-2xl text-sm text-[#5b554d]">Configure your store identity, taxes, and commerce rules.</p>
       </div>
 
       {loading ? (
