@@ -159,3 +159,38 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - `4b9580a fix: separate mock courier rates from free shipping`
 - `4231b22 phase-5d: mock status sync+tracking`
 - `phase-5: final verification`
+
+## Phase 6: Notifications, Invoices, Reports
+
+### Inspection (resume from interrupted wip)
+
+- Prior commits present: `9345f56` (APIs + invoice module) and `f37d6db` (admin UI pages + partial invoice fixes).
+- On resume: `npx tsc --noEmit` had **2 errors** in `src/app/api/admin/settings/store/route.ts` (`next/response` typo; missing `requireAdminAPI`).
+- Invoice previously reported errors (Buffer body, StyleSheet functions, DocumentProps) were **already mitigated** in the wip commit; remaining `any` cast and dynamic column styles were cleaned up.
+- `npm run lint` had **3 errors**: setState-in-effect (customers), unescaped apostrophe (store settings), explicit `any` (invoice).
+- Settings migration `20261002143350_phase6_settings` existed; after repairing a malformed local `DIRECT_URL`, `prisma migrate status` reported **Database schema is up to date** (4 migrations applied).
+- Admin UI pages already existed from wip: Dashboard, Customers, Reports, Orders (refund+invoice), Store Settings, customer invoice download.
+
+### Done
+
+- Fixed invoice PDF typing (`renderToBuffer` + static column styles); invoice totals copy stored Order paise fields; GST breakup uses CGST+SGST same state / IGST otherwise.
+- Fixed store settings API auth/imports; empty optional strings coerce to null; extended Settings form fields wired.
+- Dashboard uses `Settings.lowStockThreshold` (not hardcoded 5).
+- Refund API: optional full refund amount, allows CAPTURED/PARTIALLY_REFUNDED, cannot exceed remaining balance, updates payment + order status; admin Refund button requires a Payment row.
+- CSV exports return UTF-8 bytes with BOM (Excel-safe).
+- Notifications already hooked from payment settlement + shipment status (email + WhatsApp stub).
+- Verification: `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`.
+- Gates: `npx tsc --noEmit` (0), `npm run lint` (0 warnings), `npm run build` pass.
+
+### Commits
+
+- `9345f56 phase-6: add order notifications, invoice, refund, admin dashboard, reports, and customers`
+- `f37d6db wip: phase 6 partial before switching to codex`
+- `b535c47 phase-6: fix invoice tsc errors`
+- `6ea9b4d phase-6: settings migration`
+- `5d6f482 phase-6: admin dashboard ui`
+- `6e1fa62 phase-6: reports+customers ui`
+- `c77bec4 phase-6: refund+invoice ui`
+- `7de2b30 phase-6: csv bom + refund payment guard`
+- Final: `phase-6: notifications-invoices-reports`
+

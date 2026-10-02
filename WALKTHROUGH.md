@@ -169,4 +169,54 @@ Phase 5 was completed against the mock shipping provider only. Shiprocket has no
 - `4231b22 phase-5d: mock status sync+tracking`
 - `phase-5: final verification`
 
+# Phase 6 Walkthrough
+
+## Scope
+
+Notifications (email + WhatsApp stub), GST tax invoices (PDF), admin refunds, dashboard/customers/reports, extended store settings. Resumed from interrupted wip without redesigning completed Phase 1–5 work.
+
+## Acceptance Criteria
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| Invoice PDF totals match stored DB totals to the paisa | PASS | `buildInvoiceData` copies `subtotalPaise`/`discountPaise`/`shippingPaise`/`codFeePaise`/`totalPaise` from Order. Spot-check order `cmuqssnzw0000ewvb2z6c73tw`: DB total 85000 = invoice total 85000. Admin invoice route returned `%PDF-` (4992–5007 bytes). |
+| GST breakup correct (CGST+SGST same state, IGST different) | PASS | Same order: seller Maharashtra / buyer Delhi → IGST mode; back-calculated GST 9107 paise. Same-state path splits total GST into CGST + SGST in `src/lib/invoice.tsx`. |
+| Refund updates status; idempotent; cannot exceed payment | PASS | Over-refund returned 400 `exceeds refundable balance`. Partial ₹1 refund succeeded (`PARTIALLY_REFUNDED`, remaining tracked). Second over-refund after partial also 400. Orders without Payment hide Refund button. |
+| CSV opens in Excel without corrupted Unicode | PASS | Sales CSV first bytes `EF BB BF` (UTF-8 BOM); `Content-Type: text/csv; charset=utf-8`. |
+| Dashboard numbers match DB | PASS | API: totalOrders 4, totalRevenuePaise 766300. Manual aggregate on `paymentStatus=PAID` matched. Low-stock count 7 at threshold 5. |
+| Low-stock alert uses configured threshold | PASS | Dashboard reads `Settings.lowStockThreshold` (default 5); store settings form can change it. |
+| Admin UI pages present | PASS | `/admin/dashboard`, `/customers`, `/reports`, `/orders`, `/shipping` all HTTP 200 when admin-authenticated. |
+| `npx tsc --noEmit`, `npm run lint` (zero warnings), `npm run build` | PASS | All three passed after fixes. |
+
+## Known Issues / Notes
+
+- One historical PAID order has no Payment row (data fixture); refund correctly refuses it and UI no longer offers Refund without payment.
+- Smoke partial refund exercised the real Razorpay path because TEST credentials are present (`rfnd_…`); mock path remains when keys are absent.
+- Guest invoice download still requires owner session (or admin); email-token guest link deferred.
+- Local `DIRECT_URL` had been malformed (`DIRECT_URL="…"` nested); repaired to match `DATABASE_URL` for Prisma CLI. Do not commit `.env.local`.
+
+## Files Changed (Phase 6)
+
+- `prisma/schema.prisma`, `prisma/migrations/20261002143350_phase6_settings/migration.sql`
+- `src/lib/invoice.tsx`, `src/lib/notifications.ts`, `src/lib/payment-settlement.ts`
+- `src/app/api/admin/dashboard/route.ts`, `customers/route.ts`, `reports/sales/route.ts`
+- `src/app/api/admin/orders/[id]/invoice/route.ts`, `refund/route.ts`, `status/route.ts`, orders list
+- `src/app/api/orders/[id]/invoice/route.ts`, `src/app/api/admin/settings/store/route.ts`
+- `src/app/admin/dashboard/page.tsx`, `customers/page.tsx`, `reports/page.tsx`, `orders/AdminOrders.tsx`, `shipping/AdminStoreSettings.tsx`, `layout.tsx`
+- `src/app/account/orders/[id]/page.tsx`
+- `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`
+- `PROGRESS.md`, `WALKTHROUGH.md`
+
+## Incremental Commits
+
+- `9345f56 phase-6: add order notifications, invoice, refund, admin dashboard, reports, and customers`
+- `f37d6db wip: phase 6 partial before switching to codex`
+- `b535c47 phase-6: fix invoice tsc errors`
+- `6ea9b4d phase-6: settings migration`
+- `5d6f482 phase-6: admin dashboard ui`
+- `6e1fa62 phase-6: reports+customers ui`
+- `c77bec4 phase-6: refund+invoice ui`
+- `7de2b30 phase-6: csv bom + refund payment guard`
+- `phase-6: notifications-invoices-reports`
+
 
