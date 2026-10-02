@@ -112,7 +112,6 @@ export async function calculateCheckoutTotals(cart: CartWithItems, details: Chec
       postalCode: details.postalCode,
       weightGrams,
       amountPaise: subtotalPaise - discountPaise,
-      freeShippingThresholdPaise: settings?.freeShippingThreshold ?? 99900,
       dimensionsCm,
     })
   } catch {
@@ -120,7 +119,7 @@ export async function calculateCheckoutTotals(cart: CartWithItems, details: Chec
   }
   if (shippingRates.length === 0) throw new Error(`Delivery is unavailable for pincode ${details.postalCode}. Try another pincode.`)
   const selectedRate = shippingRates.reduce((lowest, rate) => rate.amountPaise < lowest.amountPaise ? rate : lowest)
-  const shippingPaise = selectedRate.amountPaise
+  const shippingPaise = subtotalPaise - discountPaise >= (settings?.freeShippingThreshold ?? 99900) ? 0 : selectedRate.amountPaise
   const codFeePaise = details.paymentMethod === 'COD' ? (settings?.codFeePaise ?? 500) : 0
   const totalPaise = Math.max(0, subtotalPaise - discountPaise + shippingPaise + codFeePaise)
   const codMaxPaise = settings?.codMaxPaise ?? 300000
