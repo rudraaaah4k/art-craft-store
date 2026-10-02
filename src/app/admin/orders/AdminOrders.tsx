@@ -96,14 +96,14 @@ export function AdminOrders() {
   }
 
   async function issueRefund(orderId: string, currentStatus: string) {
-    if (!['PAID', 'AUTHORIZED', 'REFUNDED'].includes(currentStatus)) {
-      setError('Only paid or authorized orders can be refunded.')
+    if (!['PAID', 'AUTHORIZED', 'PARTIALLY_REFUNDED'].includes(currentStatus)) {
+      setError('Only paid or partially refunded orders can be refunded.')
       return
     }
     const amt = window.prompt('Enter refund amount in ₹ (leave blank for FULL refund):')
     if (amt === null) return // cancelled
-    
-    let payload = {}
+
+    let payload: { amountPaise?: number } = {}
     if (amt.trim() !== '') {
       const p = Math.round(parseFloat(amt) * 100)
       if (isNaN(p) || p <= 0) {
@@ -124,7 +124,7 @@ export function AdminOrders() {
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || 'Refund failed.')
-      setMessage(`Refund successful. Status: ${data.status}`)
+      setMessage(`Refund successful. Status: ${data.paymentStatus ?? data.status}`)
       await loadOrders()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Refund failed.')
@@ -154,11 +154,11 @@ export function AdminOrders() {
                     <p className="mt-1 text-sm text-[#5b554d]">{order.items.map((item) => `${item.title} × ${item.quantity}`).join(', ')} · {money(order.totalPaise)}</p>
                     <div className="mt-3 flex gap-3 text-sm font-semibold">
                       <a href={`/api/admin/orders/${order.id}/invoice`} target="_blank" className="text-[#4a5d3a] hover:underline">
-                        📄 Invoice
+                        Invoice
                       </a>
-                      {['PAID', 'AUTHORIZED', 'REFUNDED'].includes(order.paymentStatus) && (
+                      {['PAID', 'AUTHORIZED', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
                         <button onClick={() => void issueRefund(order.id, order.paymentStatus)} disabled={busy} className="text-[#a94e28] hover:underline disabled:opacity-50">
-                          ↩ Refund
+                          Refund
                         </button>
                       )}
                     </div>

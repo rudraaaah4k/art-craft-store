@@ -6,7 +6,7 @@ import { z } from 'zod'
 type Context = { params: Promise<{ id: string }> }
 const orderIdSchema = z.string().trim().min(1).max(100)
 const refundSchema = z.object({
-  amountPaise: z.number().int().positive('Refund amount must be positive.'),
+  amountPaise: z.number().int().positive('Refund amount must be positive.').optional(),
   reason: z.enum(['duplicate', 'fraudulent', 'customer_request', 'other']).default('customer_request'),
   notes: z.string().max(200).optional(),
 })
@@ -23,7 +23,7 @@ export async function POST(request: Request, { params }: Context) {
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const parsedId = orderIdSchema.safeParse(id)
-  const parsedBody = refundSchema.safeParse(await request.json().catch(() => null))
+  const parsedBody = refundSchema.safeParse(await request.json().catch(() => ({})))
   if (!parsedId.success || !parsedBody.success) {
     return NextResponse.json({ message: 'Invalid refund request.', issues: parsedBody.success ? null : parsedBody.error.flatten() }, { status: 400 })
   }
@@ -34,8 +34,8 @@ export async function POST(request: Request, { params }: Context) {
   })
   if (!order) return NextResponse.json({ message: 'Order not found.' }, { status: 404 })
   if (!order.payment) return NextResponse.json({ message: 'No payment found for this order.' }, { status: 400 })
-  if (order.payment.status !== 'CAPTURED') {
-    return NextResponse.json({ message: 'Payment is not in a capturable state; cannot refund.' }, { status: 400 })
+  if (!['CAPTURED', 'PARTIALLY_REFUNDED'].includes(order.payment.status)) {
+    return NextResponse.json({ message: 'Payment is not refundable in its current state.' }, { status: 400 })
   }
 
   // Idempotency: sum already-refunded amount from metadata
@@ -44,15 +44,19 @@ export async function POST(request: Request, { params }: Context) {
     : {}
   const alreadyRefundedPaise: number = typeof meta.totalRefundedPaise === 'number' ? meta.totalRefundedPaise : 0
   const remainingPaise = order.payment.amountPaise - alreadyRefundedPaise
-  if (parsedBody.data.amountPaise > remainingPaise) {
+  if (remainingPaise <= 0) {
+    return NextResponse.json({ message: 'Payment is already fully refunded.' }, { status: 400 })
+  }
+
+  const amountPaise = parsedBody.data.amountPaise ?? remainingPaise
+  if (amountPaise > remainingPaise) {
     return NextResponse.json({
-      message: `Refund amount (₹${(parsedBody.data.amountPaise / 100).toFixed(2)}) exceeds refundable balance (₹${(remainingPaise / 100).toFixed(2)}).`,
+      message: `Refund amount (₹${(amountPaise / 100).toFixed(2)}) exceeds refundable balance (₹${(remainingPaise / 100).toFixed(2)}).`,
     }, { status: 400 })
   }
 
   let providerRefundId: string
   if (hasRazorpayCredentials() && order.payment.providerPaymentId) {
-    // Real Razorpay refund
     const credentials = `${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`
     const response = await fetch(`https://api.razorpay.com/v1/payments/${order.payment.providerPaymentId}/refund`, {
       method: 'POST',
@@ -61,7 +65,7 @@ export async function POST(request: Request, { params }: Context) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: parsedBody.data.amountPaise,
+        amount: amountPaise,
         notes: { reason: parsedBody.data.reason, notes: parsedBody.data.notes ?? '' },
       }),
     })
@@ -72,11 +76,10 @@ export async function POST(request: Request, { params }: Context) {
     const refundData = await response.json() as { id: string }
     providerRefundId = refundData.id
   } else {
-    // Mock path — app runs locally without Razorpay credentials
     providerRefundId = `mock_refund_${Date.now()}`
   }
 
-  const newTotalRefundedPaise = alreadyRefundedPaise + parsedBody.data.amountPaise
+  const newTotalRefundedPaise = alreadyRefundedPaise + amountPaise
   const refunds = Array.isArray(meta.refunds) ? meta.refunds : []
   const isFullRefund = newTotalRefundedPaise >= order.payment.amountPaise
 
@@ -91,7 +94,7 @@ export async function POST(request: Request, { params }: Context) {
           ...refunds,
           {
             refundId: providerRefundId,
-            amountPaise: parsedBody.data.amountPaise,
+            amountPaise,
             reason: parsedBody.data.reason,
             notes: parsedBody.data.notes ?? null,
             refundedAt: new Date().toISOString(),
@@ -103,14 +106,17 @@ export async function POST(request: Request, { params }: Context) {
 
   if (isFullRefund) {
     await prisma.order.update({ where: { id: order.id }, data: { status: 'REFUNDED', paymentStatus: 'REFUNDED' } })
+  } else {
+    await prisma.order.update({ where: { id: order.id }, data: { paymentStatus: 'PARTIALLY_REFUNDED' } })
   }
 
   return NextResponse.json({
     refundId: providerRefundId,
-    amountPaise: parsedBody.data.amountPaise,
+    amountPaise,
     totalRefundedPaise: newTotalRefundedPaise,
     remainingPaise: order.payment.amountPaise - newTotalRefundedPaise,
     paymentStatus: updatedPayment.status,
+    status: updatedPayment.status,
     isFullRefund,
   })
 }
