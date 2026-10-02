@@ -24,7 +24,6 @@ const styles = StyleSheet.create({
   value: { flex: 1 },
   tableHeader: { flexDirection: 'row', backgroundColor: '#F6F1E8', padding: '4 6', borderRadius: 2, marginBottom: 2, fontFamily: 'Helvetica-Bold' },
   tableRow: { flexDirection: 'row', padding: '3 6', borderBottom: '1 solid #E8DCC8' },
-  col: (flex: number) => ({ flex, fontSize: 8.5 }),
   totals: { marginTop: 8, alignSelf: 'flex-end', width: 220 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
   totalRowBold: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3, fontFamily: 'Helvetica-Bold', fontSize: 10, borderTop: '1 solid #2B2B2B', paddingTop: 4 },
@@ -68,6 +67,10 @@ export interface InvoiceData {
   shippingPaise: number
   codFeePaise: number
   totalPaise: number
+}
+
+function colStyle(flex: number) {
+  return { flex, fontSize: 8.5 }
 }
 
 function InvoiceDocument({ data }: { data: InvoiceData }) {
@@ -120,25 +123,25 @@ function InvoiceDocument({ data }: { data: InvoiceData }) {
 
         {/* Items Table */}
         <View style={styles.tableHeader}>
-          <Text style={styles.col(4)}>Item</Text>
-          <Text style={styles.col(1)}>SKU</Text>
-          <Text style={styles.col(0.6)}>Qty</Text>
-          <Text style={styles.col(1.2)}>Unit Price</Text>
-          <Text style={styles.col(0.8)}>GST %</Text>
-          <Text style={styles.col(1.2)}>Taxable</Text>
-          <Text style={styles.col(1.2)}>GST</Text>
-          <Text style={styles.col(1.2)}>Total</Text>
+          <Text style={colStyle(4)}>Item</Text>
+          <Text style={colStyle(1)}>SKU</Text>
+          <Text style={colStyle(0.6)}>Qty</Text>
+          <Text style={colStyle(1.2)}>Unit Price</Text>
+          <Text style={colStyle(0.8)}>GST %</Text>
+          <Text style={colStyle(1.2)}>Taxable</Text>
+          <Text style={colStyle(1.2)}>GST</Text>
+          <Text style={colStyle(1.2)}>Total</Text>
         </View>
         {gstBreakup.map((item, idx) => (
           <View key={idx} style={styles.tableRow}>
-            <Text style={styles.col(4)}>{item.title}</Text>
-            <Text style={styles.col(1)}>{item.sku ?? '—'}</Text>
-            <Text style={styles.col(0.6)}>{item.quantity}</Text>
-            <Text style={styles.col(1.2)}>{fmt(item.unitPricePaise)}</Text>
-            <Text style={styles.col(0.8)}>{item.gstPercent}%</Text>
-            <Text style={styles.col(1.2)}>{fmt(item.taxableAmount)}</Text>
-            <Text style={styles.col(1.2)}>{fmt(item.gstAmount)}</Text>
-            <Text style={styles.col(1.2)}>{fmt(item.totalPaise)}</Text>
+            <Text style={colStyle(4)}>{item.title}</Text>
+            <Text style={colStyle(1)}>{item.sku ?? '—'}</Text>
+            <Text style={colStyle(0.6)}>{item.quantity}</Text>
+            <Text style={colStyle(1.2)}>{fmt(item.unitPricePaise)}</Text>
+            <Text style={colStyle(0.8)}>{item.gstPercent}%</Text>
+            <Text style={colStyle(1.2)}>{fmt(item.taxableAmount)}</Text>
+            <Text style={colStyle(1.2)}>{fmt(item.gstAmount)}</Text>
+            <Text style={colStyle(1.2)}>{fmt(item.totalPaise)}</Text>
           </View>
         ))}
 
@@ -216,8 +219,8 @@ function InvoiceDocument({ data }: { data: InvoiceData }) {
  * The caller is responsible for fetching order data and building InvoiceData.
  */
 export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
-  const element = React.createElement(InvoiceDocument, { data })
-  return Buffer.from(await renderToBuffer(element))
+  const element = InvoiceDocument({ data })
+  return Buffer.from(await renderToBuffer(element as any))
 }
 
 /**

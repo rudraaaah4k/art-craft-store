@@ -95,6 +95,44 @@ export function AdminOrders() {
     }
   }
 
+  async function issueRefund(orderId: string, currentStatus: string) {
+    if (!['PAID', 'AUTHORIZED', 'REFUNDED'].includes(currentStatus)) {
+      setError('Only paid or authorized orders can be refunded.')
+      return
+    }
+    const amt = window.prompt('Enter refund amount in ₹ (leave blank for FULL refund):')
+    if (amt === null) return // cancelled
+    
+    let payload = {}
+    if (amt.trim() !== '') {
+      const p = Math.round(parseFloat(amt) * 100)
+      if (isNaN(p) || p <= 0) {
+        setError('Invalid refund amount.')
+        return
+      }
+      payload = { amountPaise: p }
+    }
+
+    setBusy(true)
+    setError('')
+    setMessage('')
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || 'Refund failed.')
+      setMessage(`Refund successful. Status: ${data.status}`)
+      await loadOrders()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Refund failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <section className="rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-5 sm:p-7">
       <div className="mb-6">
@@ -114,6 +152,16 @@ export function AdminOrders() {
                     <p className="font-semibold text-[#2b2b2b]">Order {order.id}</p>
                     <p className="mt-1 text-sm text-[#5b554d]">{order.email} · {order.shippingPostalCode} · {order.status} / {order.paymentStatus}</p>
                     <p className="mt-1 text-sm text-[#5b554d]">{order.items.map((item) => `${item.title} × ${item.quantity}`).join(', ')} · {money(order.totalPaise)}</p>
+                    <div className="mt-3 flex gap-3 text-sm font-semibold">
+                      <a href={`/api/admin/orders/${order.id}/invoice`} target="_blank" className="text-[#4a5d3a] hover:underline">
+                        📄 Invoice
+                      </a>
+                      {['PAID', 'AUTHORIZED', 'REFUNDED'].includes(order.paymentStatus) && (
+                        <button onClick={() => void issueRefund(order.id, order.paymentStatus)} disabled={busy} className="text-[#a94e28] hover:underline disabled:opacity-50">
+                          ↩ Refund
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {order.shipment ? (
                     <div className="text-right text-sm">

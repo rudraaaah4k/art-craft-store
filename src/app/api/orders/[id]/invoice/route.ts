@@ -33,7 +33,7 @@ export async function GET(_req: Request, { params }: Context) {
   const data = buildInvoiceData(order, settings)
   const pdf = await renderInvoicePdf(data)
 
-  return new NextResponse(pdf, {
+  return new NextResponse(new Uint8Array(pdf), {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',

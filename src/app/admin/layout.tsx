@@ -2,9 +2,12 @@ import Link from 'next/link'
 import { requireAdminPage } from '@/lib/admin'
 
 const navItems = [
+  { href: '/admin/dashboard', label: 'Dashboard', help: 'Store overview and stats' },
   { href: '/admin', label: 'Catalog', help: 'Manage products, categories, and coupons' },
-  { href: '/admin/orders', label: 'Orders', help: 'Manage orders and mock shipment fulfillment' },
-  { href: '/admin/shipping', label: 'Shipping', help: 'Configure shipment pickup details' },
+  { href: '/admin/orders', label: 'Orders', help: 'Manage orders, shipments, refunds, and invoices' },
+  { href: '/admin/customers', label: 'Customers', help: 'Customer list and lifetime value' },
+  { href: '/admin/reports', label: 'Reports', help: 'Sales reports and CSV exports' },
+  { href: '/admin/shipping', label: 'Settings', help: 'Configure pickup and store settings' },
 ]
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
