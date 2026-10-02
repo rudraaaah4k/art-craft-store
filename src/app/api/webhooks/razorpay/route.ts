@@ -14,6 +14,7 @@ export async function POST(request: Request) {
   if (!eventId || !signature || !verifyRazorpayWebhook(rawBody, signature)) return NextResponse.json({ error: 'Invalid webhook.' }, { status: 400 })
   let payload: { event?: string; payload?: { payment?: { entity?: { id?: string; order_id?: string; amount?: number } } } }
   try { payload = razorpayWebhookSchema.parse(JSON.parse(rawBody)) } catch { return NextResponse.json({ error: 'Invalid webhook payload.' }, { status: 400 }) }
+  console.info('[razorpay-webhook] signature verified', { eventId, event: payload.event })
 
   try {
     await prisma.$transaction(async (transaction) => {
