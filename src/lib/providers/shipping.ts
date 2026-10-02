@@ -4,7 +4,6 @@ export interface ShippingRateInput {
   postalCode: string
   weightGrams: number
   amountPaise: number
-  freeShippingThresholdPaise?: number
   dimensionsCm?: PackageDimensions
 }
 
@@ -34,13 +33,40 @@ export interface CreateShipmentInput {
   orderId: string
   postalCode: string
   weightGrams: number
-  items: Array<{ title: string; quantity: number }>
+  dimensionsCm: PackageDimensions
+  courier: ShippingRate
+  pickupAddress: {
+    name: string
+    email: string
+    phone: string
+    line1: string
+    line2: string | null
+    city: string
+    state: string
+    postalCode: string
+    country: string
+  }
+  deliveryAddress: {
+    name: string
+    phone: string
+    line1: string
+    line2: string | null
+    city: string
+    state: string
+    postalCode: string
+  }
+  items: Array<{ title: string; sku: string | null; quantity: number; unitPricePaise: number }>
 }
 
 export interface ShipmentResult {
   id: string
   provider: string
-  status: 'PENDING'
+  status: 'PACKED'
+  trackingNumber: string
+  courierName: string
+  trackingUrl: string
+  labelUrl: string
+  pickupScheduledAt: string
 }
 
 export interface ShippingProvider {
@@ -61,12 +87,11 @@ export class MockShippingProvider implements ShippingProvider {
       ? Math.ceil(input.dimensionsCm.lengthCm * input.dimensionsCm.widthCm * input.dimensionsCm.heightCm / 5000 * 1000)
       : 0
     const chargeableWeightGrams = Math.max(input.weightGrams, volumetricWeightGrams, 500)
-    const freeShipping = input.amountPaise >= (input.freeShippingThresholdPaise ?? 99900)
-    const baseRate = freeShipping ? 0 : 4900 + Math.ceil(chargeableWeightGrams / 500) * 2500
+    const baseRate = 4900 + Math.ceil(chargeableWeightGrams / 500) * 2500
 
     return [
-      { id: `${this.provider}_surface_${randomUUID()}`, provider: this.provider, courierName: 'Mock Surface', amountPaise: baseRate, estimatedDays: 5, chargeableWeightGrams },
-      { id: `${this.provider}_priority_${randomUUID()}`, provider: this.provider, courierName: 'Mock Priority', amountPaise: freeShipping ? 0 : baseRate + 4000, estimatedDays: 3, chargeableWeightGrams },
+      { id: `${this.provider}_surface_${input.postalCode}`, provider: this.provider, courierName: 'Mock Surface', amountPaise: baseRate, estimatedDays: 5, chargeableWeightGrams },
+      { id: `${this.provider}_priority_${input.postalCode}`, provider: this.provider, courierName: 'Mock Priority', amountPaise: baseRate + 4000, estimatedDays: 3, chargeableWeightGrams },
     ]
   }
 
@@ -81,7 +106,17 @@ export class MockShippingProvider implements ShippingProvider {
   }
 
   async createShipment(input: CreateShipmentInput): Promise<ShipmentResult> {
-    return { id: `${this.provider}_shipment_${input.orderId}`, provider: this.provider, status: 'PENDING' }
+    const trackingNumber = `MOCK${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`
+    return {
+      id: `${this.provider}_shipment_${input.orderId}`,
+      provider: this.provider,
+      status: 'PACKED',
+      trackingNumber,
+      courierName: input.courier.courierName,
+      trackingUrl: `/orders/${input.orderId}`,
+      labelUrl: `/api/admin/orders/${input.orderId}/label`,
+      pickupScheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    }
   }
 
   async trackShipment(trackingNumber: string): Promise<{ status: string }> {
@@ -95,6 +130,9 @@ export function getShippingProvider(): ShippingProvider {
 
 // Real Shiprocket transport is intentionally disabled for mock-only Phase 5.
 export const realShiprocketStubs = {
+  async login(): Promise<never> {
+    throw new Error('Real Shiprocket API is disabled; mock shipping is active.')
+  },
   async getRates(): Promise<never> {
     throw new Error('Real Shiprocket API is disabled; mock shipping is active.')
   },
@@ -102,6 +140,12 @@ export const realShiprocketStubs = {
     throw new Error('Real Shiprocket API is disabled; mock shipping is active.')
   },
   async trackShipment(): Promise<never> {
+    throw new Error('Real Shiprocket API is disabled; mock shipping is active.')
+  },
+  async generateLabel(): Promise<never> {
+    throw new Error('Real Shiprocket API is disabled; mock shipping is active.')
+  },
+  async schedulePickup(): Promise<never> {
     throw new Error('Real Shiprocket API is disabled; mock shipping is active.')
   },
 }

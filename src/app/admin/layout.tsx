@@ -3,6 +3,7 @@ import { requireAdminPage } from '@/lib/admin'
 
 const navItems = [
   { href: '/admin', label: 'Catalog', help: 'Manage products, categories, and coupons' },
+  { href: '/admin/orders', label: 'Orders', help: 'Manage orders and mock shipment fulfillment' },
   { href: '/admin/shipping', label: 'Shipping', help: 'Configure shipment pickup details' },
 ]
 

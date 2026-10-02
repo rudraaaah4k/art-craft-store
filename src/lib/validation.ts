@@ -100,3 +100,7 @@ export const shippingServiceabilitySchema = z.object({
   widthCm: z.coerce.number().positive().max(300).optional(),
   heightCm: z.coerce.number().positive().max(300).optional(),
 })
+
+export const createMockShipmentSchema = z.object({
+  courierId: z.string().trim().min(1).max(120),
+})
