@@ -93,8 +93,9 @@
 | Webhook replay is idempotent | PASS (synthetic signed payload) | First signed `payment.captured` request returned 200; replay returned `{"duplicate":true}`. Database verification found one event, one captured payment, and one CONFIRMED/PAID order transition. |
 | Failed or expired payment releases stock | PASS | Failure endpoint returned 200 and restored variant stock from 0 to 1; scheduled cleanup endpoint is implemented for expired reservations. |
 | COD rules are enforced | PASS | COD quote for the ₹12,000 mountain product returned HTTP 400; server checks settings, product flags, made-to-order status, and max total. |
-| Full guest Razorpay TEST-mode purchase completes | NOT VERIFIED | No Razorpay test credentials are configured locally. Mock Razorpay order creation, mock email settlement, and confirmation page were verified; real Checkout/webhook delivery needs credentials and a public endpoint. |
-| Logged-in order history, detail, saved addresses, and delivered-order reviews | NOT VERIFIED in browser | Routes, Zod validation, ownership checks, and delivered-order gate compile/build; seeded browser login did not complete in the existing dev session. Guest address/review requests correctly returned 401. |
+| Full guest Razorpay TEST-mode purchase completes | PASS (manual browser) | Developer manually completed the real Razorpay TEST checkout with the domestic test card and verified the confirmation/webhook/payment path. Automated/Playwright checkout attempts are blocked by Razorpay fraud detection, which is expected gateway behavior. |
+| Logged-in order history, detail, and saved-address CRUD | PASS | Mock phone OTP login succeeded in the browser; address was created as default, rendered, deleted, and API returned an empty list; delivered order history/detail rendered correctly. |
+| Review writing is restricted to delivered purchases | PASS | A `DELIVERED` order fixture for the authenticated user enabled the product review form; submission returned “Review submitted for moderation.” |
 | `npx tsc --noEmit`, `npm run lint`, `npm run build` | PASS | All three final commands passed; ESLint reported zero warnings. |
 
 ## Implementation Summary
@@ -105,10 +106,9 @@
 - `e903a57 phase-4d: cod+stock-reservation`
 - `d3cdc87 phase-4e: account+reviews`
 
-## Known Issues and Deferred Verification
+## Known Issues
 
-- Razorpay real TEST-mode flow is intentionally unclaimed until test credentials and a public webhook URL are available.
-- Authenticated account browser coverage remains unverified because the existing dev browser session did not complete seeded login; this should be the first focused check after review.
+- Razorpay automated/Playwright payment attempts can be blocked by gateway fraud detection; manual real-browser TEST checkout is the authoritative verification for that external flow.
 - Reservation cleanup is exposed as a protected cron endpoint and must be scheduled by deployment configuration.
 
 ## Files Changed
@@ -121,5 +121,6 @@
 - `src/app/account/addresses/page.tsx`, `src/app/account/orders/*`
 - `src/app/products/[slug]/ReviewForm.tsx`, `src/app/products/[slug]/page.tsx`
 - `src/components/Header.tsx`, `.env.example`
+- `scripts/test-webhook.ts`
 
 

@@ -112,7 +112,7 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - **Payments:** Added Razorpay Orders API integration, Checkout widget wiring, HMAC payment verification, raw-body webhook verification, WebhookEvent idempotency, failure release, and mock-provider fallback.
 - **COD and expiry:** Enforced global/product/made-to-order COD rules, configured limit and fee, database-backed endpoint rate limits, and protected expired-reservation cleanup endpoint.
 - **Account:** Added saved address CRUD, order history/detail pages, delivered-order review eligibility API, and storefront review form.
-- **Checks:** `npx tsc --noEmit`, `npm run lint` (zero warnings), and `npm run build` pass.
+- **Checks:** Final `npx tsc --noEmit`, `npm run lint` (zero warnings), and `npm run build` pass.
 
 ### Acceptance Evidence
 
@@ -122,8 +122,9 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - Webhook replay: PASS with a signed local test payload. First request returned 200, replay returned 200 duplicate; database showed one WebhookEvent, one captured Payment, and one order transition.
 - Failed-payment release: PASS. Failure endpoint returned 200 and restored reserved variant stock.
 - COD limit: PASS. ₹12,000 mountain order quote returned 400 `Cash on Delivery is not available for this order.`
-- Real Razorpay TEST-mode payment: NOT VERIFIED. Local environment has no Razorpay credentials, so the mock provider and confirmation email path were tested; live Checkout requires test keys and a public webhook endpoint.
-- Authenticated order/address/review browser flow: NOT VERIFIED in this session because the existing browser dev session did not complete seeded login. Guest authorization checks returned 401 as expected; TypeScript, lint, build, and route implementation passed.
+- Real Razorpay TEST-mode payment: PASS. Developer manually verified the full guest Razorpay TEST checkout in a real browser; automated/Playwright checkout is blocked by Razorpay fraud detection, which is expected gateway behavior rather than an application defect.
+- Authenticated account flow: PASS. Mock phone OTP login succeeded; saved address create/default/delete, order history/detail, and delivered-order review submission were verified in the browser.
+- Signed webhook utility: PASS. `scripts/test-webhook.ts` generated the HMAC signature, settled a test order, and verified duplicate delivery handling.
 
 ### Commits
 
@@ -132,3 +133,8 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - `f84708a phase-4c: razorpay+webhook`
 - `e903a57 phase-4d: cod+stock-reservation`
 - `d3cdc87 phase-4e: account+reviews`
+- `1649e53 fix: razorpay failed webhook release`
+- `3480871 fix: log verified razorpay webhooks`
+- `64d1b4a fix: mark abandoned payments failed`
+- `3e0b8c9 test: add signed razorpay webhook script`
+- Final verification commit: `phase-4: final verification`
