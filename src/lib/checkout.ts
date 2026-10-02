@@ -117,7 +117,7 @@ export async function failOrderAndReleaseReservations(transaction: Prisma.Transa
     await transaction.stockReservation.update({ where: { id: reservation.id }, data: { status: 'RELEASED', releasedAt: new Date() } })
   }
   await transaction.order.update({ where: { id: orderId }, data: { status: 'FAILED', paymentStatus: 'FAILED' } })
-  if (providerPaymentId) await transaction.payment.update({ where: { orderId }, data: { providerPaymentId, status: 'FAILED' } })
+  await transaction.payment.update({ where: { orderId }, data: { ...(providerPaymentId ? { providerPaymentId } : {}), status: 'FAILED' } })
   return reservations.length
 }
 
