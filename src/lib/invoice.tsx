@@ -69,9 +69,16 @@ export interface InvoiceData {
   totalPaise: number
 }
 
-function colStyle(flex: number) {
-  return { flex, fontSize: 8.5 }
-}
+const col = StyleSheet.create({
+  item: { flex: 4, fontSize: 8.5 },
+  sku: { flex: 1, fontSize: 8.5 },
+  qty: { flex: 0.6, fontSize: 8.5 },
+  unit: { flex: 1.2, fontSize: 8.5 },
+  gstPct: { flex: 0.8, fontSize: 8.5 },
+  taxable: { flex: 1.2, fontSize: 8.5 },
+  gstAmt: { flex: 1.2, fontSize: 8.5 },
+  total: { flex: 1.2, fontSize: 8.5 },
+})
 
 function InvoiceDocument({ data }: { data: InvoiceData }) {
   const sameState = data.sellerState.trim().toLowerCase() === data.buyerState.trim().toLowerCase()
@@ -123,25 +130,25 @@ function InvoiceDocument({ data }: { data: InvoiceData }) {
 
         {/* Items Table */}
         <View style={styles.tableHeader}>
-          <Text style={colStyle(4)}>Item</Text>
-          <Text style={colStyle(1)}>SKU</Text>
-          <Text style={colStyle(0.6)}>Qty</Text>
-          <Text style={colStyle(1.2)}>Unit Price</Text>
-          <Text style={colStyle(0.8)}>GST %</Text>
-          <Text style={colStyle(1.2)}>Taxable</Text>
-          <Text style={colStyle(1.2)}>GST</Text>
-          <Text style={colStyle(1.2)}>Total</Text>
+          <Text style={col.item}>Item</Text>
+          <Text style={col.sku}>SKU</Text>
+          <Text style={col.qty}>Qty</Text>
+          <Text style={col.unit}>Unit Price</Text>
+          <Text style={col.gstPct}>GST %</Text>
+          <Text style={col.taxable}>Taxable</Text>
+          <Text style={col.gstAmt}>GST</Text>
+          <Text style={col.total}>Total</Text>
         </View>
         {gstBreakup.map((item, idx) => (
           <View key={idx} style={styles.tableRow}>
-            <Text style={colStyle(4)}>{item.title}</Text>
-            <Text style={colStyle(1)}>{item.sku ?? '—'}</Text>
-            <Text style={colStyle(0.6)}>{item.quantity}</Text>
-            <Text style={colStyle(1.2)}>{fmt(item.unitPricePaise)}</Text>
-            <Text style={colStyle(0.8)}>{item.gstPercent}%</Text>
-            <Text style={colStyle(1.2)}>{fmt(item.taxableAmount)}</Text>
-            <Text style={colStyle(1.2)}>{fmt(item.gstAmount)}</Text>
-            <Text style={colStyle(1.2)}>{fmt(item.totalPaise)}</Text>
+            <Text style={col.item}>{item.title}</Text>
+            <Text style={col.sku}>{item.sku ?? '—'}</Text>
+            <Text style={col.qty}>{item.quantity}</Text>
+            <Text style={col.unit}>{fmt(item.unitPricePaise)}</Text>
+            <Text style={col.gstPct}>{item.gstPercent}%</Text>
+            <Text style={col.taxable}>{fmt(item.taxableAmount)}</Text>
+            <Text style={col.gstAmt}>{fmt(item.gstAmount)}</Text>
+            <Text style={col.total}>{fmt(item.totalPaise)}</Text>
           </View>
         ))}
 
@@ -219,8 +226,12 @@ function InvoiceDocument({ data }: { data: InvoiceData }) {
  * The caller is responsible for fetching order data and building InvoiceData.
  */
 export async function renderInvoicePdf(data: InvoiceData): Promise<Buffer> {
-  const element = InvoiceDocument({ data })
-  return Buffer.from(await renderToBuffer(element as any))
+  // @react-pdf requires ReactElement<DocumentProps>; InvoiceDocument roots in <Document>.
+  const element = (<InvoiceDocument data={data} />) as React.ReactElement<
+    React.ComponentProps<typeof Document>
+  >
+  const pdfBuffer = await renderToBuffer(element)
+  return Buffer.from(pdfBuffer)
 }
 
 /**
@@ -253,6 +264,8 @@ export function buildInvoiceData(
     }[]
   },
   settings: {
+    storeName?: string | null
+    sellerGstin?: string | null
     pickupName?: string | null
     pickupAddressLine1?: string | null
     pickupAddressLine2?: string | null
@@ -262,7 +275,7 @@ export function buildInvoiceData(
     pickupCountry?: string
   } | null
 ): InvoiceData {
-  const sellerName = settings?.pickupName ?? 'ArtCraft Store'
+  const sellerName = settings?.storeName || settings?.pickupName || 'ArtCraft Store'
   const sellerLines = [
     settings?.pickupAddressLine1,
     settings?.pickupAddressLine2,
@@ -286,6 +299,7 @@ export function buildInvoiceData(
     orderId: order.id,
     orderDate: order.placedAt,
     sellerName,
+    sellerGstin: settings?.sellerGstin ?? null,
     sellerAddress,
     sellerState,
     buyerName: order.shippingFullName,
