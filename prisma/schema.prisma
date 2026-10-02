@@ -357,6 +357,13 @@ model Wishlist {
 model Settings {
   id                    String   @id @default(cuid())
   key                   String   @unique
+  // Store identity
+  storeName             String   @default("ArtCraft Store")
+  storeEmail            String?
+  storePhone            String?
+  logoUrl               String?
+  sellerGstin           String?
+  // Pickup / sender address
   pickupName            String?
   pickupEmail           String?
   pickupPhone           String?
@@ -366,6 +373,7 @@ model Settings {
   pickupState           String?
   pickupPostalCode      String?
   pickupCountry         String   @default("India")
+  // Commerce rules
   currency              String   @default("INR")
   gstPercent            Int      @default(12)
   freeShippingThreshold Int      @default(99900)
@@ -373,6 +381,7 @@ model Settings {
   codMaxPaise           Int      @default(300000)
   codFeePaise           Int      @default(500)
   returnWindowDays      Int      @default(7)
+  lowStockThreshold     Int      @default(5)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }

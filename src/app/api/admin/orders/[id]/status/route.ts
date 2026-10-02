@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server'
 import { getAdminApiSession } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
 import { mockShipmentStatusSchema } from '@/lib/validation'
+import { sendOrderNotification, type OrderNotificationEvent } from '@/lib/notifications'
 import { z } from 'zod'
 
 type Context = { params: Promise<{ id: string }> }
 const orderIdSchema = z.string().trim().min(1).max(100)
 const progression = ['PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED'] as const
+
+const statusToEvent: Record<string, OrderNotificationEvent> = {
+  SHIPPED: 'ORDER_SHIPPED',
+  OUT_FOR_DELIVERY: 'ORDER_OUT_FOR_DELIVERY',
+  DELIVERED: 'ORDER_DELIVERED',
+}
 
 export async function PATCH(request: Request, { params }: Context) {
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
@@ -24,6 +31,8 @@ export async function PATCH(request: Request, { params }: Context) {
 
   const previousMetadata = shipment.metadata && typeof shipment.metadata === 'object' && !Array.isArray(shipment.metadata) ? shipment.metadata : {}
   const previousTimeline = 'timeline' in previousMetadata && Array.isArray(previousMetadata.timeline) ? previousMetadata.timeline : []
+  const order = await prisma.order.findUnique({ where: { id: shipment.orderId } })
+
   const updated = await prisma.$transaction(async (transaction) => {
     const updatedShipment = await transaction.shipment.update({
       where: { id: shipment.id },
@@ -41,5 +50,17 @@ export async function PATCH(request: Request, { params }: Context) {
     })
     return updatedShipment
   })
+
+  // Send notification for status transitions that have a customer-facing event
+  if (order && statusToEvent[parsedBody.data.status]) {
+    await sendOrderNotification({
+      event: statusToEvent[parsedBody.data.status],
+      orderId: order.id,
+      email: order.email,
+      phone: order.shippingPhone,
+      trackingNumber: shipment.trackingNumber,
+    })
+  }
+
   return NextResponse.json(updated)
 }

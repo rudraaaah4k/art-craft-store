@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client'
-import { getEmailProvider } from '@/lib/providers/email'
+import { sendOrderNotification } from '@/lib/notifications'
 import { prisma } from '@/lib/prisma'
 
 export async function settlePayment(input: { orderId: string; provider: string; providerPaymentId: string; signature?: string; metadata?: Prisma.InputJsonValue }) {
@@ -16,6 +16,6 @@ export async function settlePayment(input: { orderId: string; provider: string; 
     const updatedOrder = await transaction.order.update({ where: { id: order.id }, data: { paymentStatus: 'PAID', status: 'CONFIRMED' } })
     return { payment, order: updatedOrder }
   })
-  await getEmailProvider().sendMessage({ to: order.email, subject: `Order ${order.id} confirmed`, text: `Your ArtCraft order ${order.id} is confirmed.` })
+  await sendOrderNotification({ event: 'ORDER_CONFIRMED', orderId: order.id, email: order.email, phone: order.shippingPhone })
   return { alreadySettled: false, ...settled }
 }
