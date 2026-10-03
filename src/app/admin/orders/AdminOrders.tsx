@@ -1,6 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { canIssueRefund } from './IssueRefundForm'
 
 type CourierRate = { id: string; courierName: string; amountPaise: number; estimatedDays: number; chargeableWeightGrams: number }
 type Shipment = { id: string; trackingNumber: string | null; status: string; ratePaise: number; labelUrl: string | null; metadata: unknown }
@@ -14,7 +16,7 @@ type AdminOrder = {
   createdAt: string
   items: Array<{ title: string; quantity: number }>
   shipment: Shipment | null
-  payment: { id: string; status: string; amountPaise: number } | null
+  payment: { id: string; status: string; amountPaise: number; metadata?: unknown } | null
 }
 const nextStatus: Record<string, string> = { PACKED: 'SHIPPED', SHIPPED: 'OUT_FOR_DELIVERY', OUT_FOR_DELIVERY: 'DELIVERED' }
 
@@ -106,44 +108,6 @@ export function AdminOrders() {
     }
   }
 
-  async function issueRefund(orderId: string, currentStatus: string) {
-    if (!['PAID', 'AUTHORIZED', 'PARTIALLY_REFUNDED'].includes(currentStatus)) {
-      setError('Only paid or partially refunded orders can be refunded.')
-      return
-    }
-    const amt = window.prompt('Enter refund amount in ₹ (leave blank for FULL refund):')
-    if (amt === null) return // cancelled
-
-    let payload: { amountPaise?: number } = {}
-    if (amt.trim() !== '') {
-      const p = Math.round(parseFloat(amt) * 100)
-      if (isNaN(p) || p <= 0) {
-        setError('Invalid refund amount.')
-        return
-      }
-      payload = { amountPaise: p }
-    }
-
-    setBusy(true)
-    setError('')
-    setMessage('')
-    try {
-      const response = await fetch(`/api/admin/orders/${orderId}/refund`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.message || 'Refund failed.')
-      setMessage(`Refund successful. Status: ${data.paymentStatus ?? data.status}`)
-      await loadOrders()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Refund failed.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
   return (
     <section className="rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-5 sm:p-7">
       <div className="mb-6">
@@ -160,17 +124,22 @@ export function AdminOrders() {
               <article key={order.id} className="border border-[#d8c7b1] bg-white p-4 sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-[#2b2b2b]">Order {order.id}</p>
+                    <p className="font-semibold text-[#2b2b2b]">
+                      <Link href={`/admin/orders/${order.id}`} className="hover:underline">Order {order.id}</Link>
+                    </p>
                     <p className="mt-1 text-sm text-[#5b554d]">{order.email} · {order.shippingPostalCode} · {order.status} / {order.paymentStatus}</p>
                     <p className="mt-1 text-sm text-[#5b554d]">{order.items.map((item) => `${item.title} × ${item.quantity}`).join(', ')} · {money(order.totalPaise)}</p>
-                    <div className="mt-3 flex gap-3 text-sm font-semibold">
-                      <a href={`/api/admin/orders/${order.id}/invoice`} target="_blank" className="text-[#4a5d3a] hover:underline">
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-semibold">
+                      <Link href={`/admin/orders/${order.id}`} className="min-h-11 rounded-md border border-[#4a5d3a] px-4 py-2 text-[#4a5d3a]">
+                        View order
+                      </Link>
+                      <a href={`/api/admin/orders/${order.id}/invoice`} target="_blank" rel="noreferrer" className="min-h-11 rounded-md border border-[#4a5d3a] px-4 py-2 text-[#4a5d3a]">
                         Invoice
                       </a>
-                      {order.payment && ['PAID', 'AUTHORIZED', 'PARTIALLY_REFUNDED'].includes(order.paymentStatus) && (
-                        <button onClick={() => void issueRefund(order.id, order.paymentStatus)} disabled={busy} className="text-[#a94e28] hover:underline disabled:opacity-50">
-                          Refund
-                        </button>
+                      {canIssueRefund(order.paymentStatus, order.payment) && (
+                        <Link href={`/admin/orders/${order.id}#refund`} className="min-h-11 rounded-md bg-[#a94e28] px-4 py-2 text-white">
+                          Issue Refund
+                        </Link>
                       )}
                     </div>
                   </div>

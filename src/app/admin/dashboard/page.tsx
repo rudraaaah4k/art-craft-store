@@ -74,7 +74,11 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-[#e8dcc8]">
                 {data.recentOrders.map((order) => (
                   <tr key={order.id}>
-                    <td className="p-3 font-mono text-xs">{order.id.slice(-8).toUpperCase()}</td>
+                    <td className="p-3 font-mono text-xs">
+                      <a href={`/admin/orders/${order.id}`} className="text-[#a94e28] underline-offset-2 hover:underline">
+                        {order.id.slice(-8).toUpperCase()}
+                      </a>
+                    </td>
                     <td className="p-3">
                       <div>{order.shippingFullName}</div>
                       <div className="text-xs text-[#888]">{order.email}</div>
