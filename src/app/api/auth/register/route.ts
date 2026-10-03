@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { registrationSchema } from '@/lib/validation'
 
+const AUTH_RATE_LIMIT = process.env.NODE_ENV === 'development' ? 1000 : 5
+
 export async function POST(req: Request) {
   try {
     const forwardedFor = req.headers.get('x-forwarded-for')
@@ -14,7 +16,7 @@ export async function POST(req: Request) {
       },
     })
 
-    if (attempts >= 5) {
+    if (attempts >= AUTH_RATE_LIMIT) {
       return NextResponse.json({ message: 'Rate limit exceeded. Please try again later.' }, { status: 429 })
     }
 

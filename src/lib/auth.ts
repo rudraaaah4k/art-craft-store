@@ -7,6 +7,8 @@ import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { emailPasswordSchema, phoneOtpSchema } from '@/lib/validation'
 
+const AUTH_RATE_LIMIT = process.env.NODE_ENV === 'development' ? 1000 : 5
+
 const hasConfiguredGoogleCredential = (value: string | undefined) => Boolean(value && !value.startsWith('your-'))
 const googleCredentials = hasConfiguredGoogleCredential(process.env.GOOGLE_CLIENT_ID)
   && hasConfiguredGoogleCredential(process.env.GOOGLE_CLIENT_SECRET)
@@ -41,7 +43,7 @@ export const authOptions: NextAuthOptions = {
           },
         })
 
-        if (attempts >= 5) {
+        if (attempts >= AUTH_RATE_LIMIT) {
           throw new Error('Rate limit exceeded. Please try again later.')
         }
 
@@ -91,7 +93,7 @@ export const authOptions: NextAuthOptions = {
           },
         })
 
-        if (attempts >= 5) {
+        if (attempts >= AUTH_RATE_LIMIT) {
           throw new Error('Rate limit exceeded. Please try again later.')
         }
 
