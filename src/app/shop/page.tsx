@@ -3,7 +3,14 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import type { Product, ProductImage } from '@prisma/client'
+import type { Metadata } from 'next'
 import { ShopFilters } from './ShopFilters'
+
+export const metadata: Metadata = {
+  title: 'Shop All Products',
+  description: 'Browse our full collection of handmade Indian art, paintings, handicrafts, and artisan goods. Filter by category, price, and availability.',
+  alternates: { canonical: '/shop' },
+}
 
 export const dynamic = 'force-dynamic' // Ensure URL changes re-fetch data
 
