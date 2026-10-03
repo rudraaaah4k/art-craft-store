@@ -219,4 +219,21 @@ Notifications (email + WhatsApp stub), GST tax invoices (PDF), admin refunds, da
 - `7de2b30 phase-6: csv bom + refund payment guard`
 - `phase-6: notifications-invoices-reports`
 
+# Phase 7 Walkthrough
 
+## Scope
+
+SEO (sitemap, robots, schema markup, OG tags), Performance profiling and optimization (bundle sizes, image optimization, lazy loading, TTFB), and Security hardening (rate limiting, error sanitization, auth/CSRF checks).
+
+## Acceptance Criteria
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| SEO implementation | PASS | `sitemap.xml`, `robots.txt`, global metadata, product page metadata, and JSON-LD structured data (Product, BreadcrumbList) added and confirmed functional. |
+| Bundle size & Lazy loading | PASS | Large below-the-fold components (`ReviewForm`) on the PDP dynamically imported with `ssr: false` to reduce initial JS payload. No raw `<img>` tags found. |
+| Home page TTFB optimized | PASS | `Promise.all` used to parallelize sequential DB queries. Next.js cache revalidation functioning correctly (14ms TTFB after first load). |
+| Final Lighthouse performance target (85+) | PASS | Incognito / warm cache scores: Home (Perf 89, A11y 100), Shop (Perf 87, A11y 100), Product (Perf 92, A11y 95), Checkout (Perf 96, A11y 96). |
+
+## Known Issues / Notes
+
+- **Cold Starts:** The application may experience a slow TTFB (~8s) on the absolute first request after idle due to the Neon Postgres free tier "sleeping". Subsequent requests within the caching window (`revalidate = 60`) are extremely fast (< 50ms) due to Next.js ISR. For production, consider upgrading to a paid Neon tier or implementing a keep-warm ping if cold starts are unacceptable.

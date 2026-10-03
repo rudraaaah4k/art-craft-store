@@ -6,7 +6,10 @@ import { prisma } from '@/lib/prisma'
 import { checkoutOrderSchema } from '@/lib/validation'
 import { enforceRateLimit } from '@/lib/rate-limit'
 
+import { verifyCsrfOrigin } from '@/lib/csrf'
+
 export async function POST(request: Request) {
+  if (!verifyCsrfOrigin(request)) return NextResponse.json({ message: 'CSRF verification failed' }, { status: 403 })
   if (!await enforceRateLimit(request, 'checkout-order', 10)) return NextResponse.json({ error: 'Too many checkout attempts. Try again later.' }, { status: 429 })
   const parsed = checkoutOrderSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid order details.' }, { status: 400 })

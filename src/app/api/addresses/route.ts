@@ -9,7 +9,10 @@ export async function GET() {
   return NextResponse.json(await prisma.address.findMany({ where: { userId: session.user.id }, orderBy: [{ isDefault: 'desc' }, { updatedAt: 'desc' }] }))
 }
 
+import { verifyCsrfOrigin } from '@/lib/csrf'
+
 export async function POST(request: Request) {
+  if (!verifyCsrfOrigin(request)) return NextResponse.json({ message: 'CSRF verification failed' }, { status: 403 })
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
   const parsed = addressSchema.safeParse(await request.json().catch(() => null))

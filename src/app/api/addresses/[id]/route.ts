@@ -5,7 +5,10 @@ import { addressSchema } from '@/lib/validation'
 
 type Context = { params: Promise<{ id: string }> }
 
+import { verifyCsrfOrigin } from '@/lib/csrf'
+
 export async function PATCH(request: Request, { params }: Context) {
+  if (!verifyCsrfOrigin(request)) return NextResponse.json({ message: 'CSRF verification failed' }, { status: 403 })
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
   const parsed = addressSchema.safeParse(await request.json().catch(() => null))
@@ -21,6 +24,7 @@ export async function PATCH(request: Request, { params }: Context) {
 }
 
 export async function DELETE(_request: Request, { params }: Context) {
+  if (!verifyCsrfOrigin(_request)) return NextResponse.json({ message: 'CSRF verification failed' }, { status: 403 })
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
   const { id } = await params
