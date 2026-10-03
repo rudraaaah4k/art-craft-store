@@ -6,22 +6,20 @@ import type { Product, ProductImage } from '@prisma/client'
 export const revalidate = 60
 
 export default async function HomePage() {
-  const categories = await prisma.category.findMany({
-    take: 3,
-  })
-
-  const featuredProducts = await prisma.product.findMany({
-    where: { status: 'PUBLISHED' },
-    include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
-    take: 4,
-  })
-
-  const newArrivals = await prisma.product.findMany({
-    where: { status: 'PUBLISHED' },
-    orderBy: { createdAt: 'desc' },
-    include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
-    take: 4,
-  })
+  const [categories, featuredProducts, newArrivals] = await Promise.all([
+    prisma.category.findMany({ take: 3 }),
+    prisma.product.findMany({
+      where: { status: 'PUBLISHED' },
+      include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+      take: 4,
+    }),
+    prisma.product.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { createdAt: 'desc' },
+      include: { images: { orderBy: { sortOrder: 'asc' }, take: 1 } },
+      take: 4,
+    })
+  ])
 
   return (
     <div className="flex flex-col gap-16 pb-16">
