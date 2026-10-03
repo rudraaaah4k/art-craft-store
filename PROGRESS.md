@@ -177,7 +177,8 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - Fixed store settings API auth/imports; empty optional strings coerce to null; extended Settings form fields wired.
 - Dashboard uses `Settings.lowStockThreshold` (not hardcoded 5).
 - Refund API: optional full refund amount, allows CAPTURED/PARTIALLY_REFUNDED, cannot exceed remaining balance, updates payment + order status; admin Refund button requires a Payment row. Fixed issue where UI was missing - created `<IssueRefundForm>` and integrated into order detail page `/admin/orders/[id]`. Improved error handling to surface actual Razorpay API errors directly to the Admin UI.
-- CSV exports return UTF-8 bytes with BOM (Excel-safe).
+- SEO: added sitemap.xml, robots.txt, global/product OpenGraph tags, canonical URLs, and JSON-LD schema (Product + BreadcrumbList) for rich results.
+- Performance: dynamically imported heavy below-the-fold components (like ReviewForm) on the Product Detail Page to reduce First Load JS. Confirmed `next/image` usage everywhere without raw `<img>` tags. (Lighthouse scoring was deferred to manual verification due to a Playwright tool outage).
 - Notifications already hooked from payment settlement + shipment status (email + WhatsApp stub).
 - Verification: `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`.
 - Gates: `npx tsc --noEmit` (0), `npm run lint` (0 warnings), `npm run build` pass.
