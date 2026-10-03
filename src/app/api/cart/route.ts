@@ -25,34 +25,39 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const parsed = cartItemSchema.safeParse(await request.json().catch(() => null))
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid cart item.' }, { status: 400 })
+  try {
+    const parsed = cartItemSchema.safeParse(await request.json().catch(() => null))
+    if (!parsed.success) return NextResponse.json({ error: 'Invalid cart item.' }, { status: 400 })
 
-  const { productId, variantId, quantity } = parsed.data
-  const product = await prisma.product.findFirst({
-    where: { id: productId, status: 'PUBLISHED', deletedAt: null },
-    include: { variants: true },
-  })
-  if (!product) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
+    const { productId, variantId, quantity } = parsed.data
+    const product = await prisma.product.findFirst({
+      where: { id: productId, status: 'PUBLISHED', deletedAt: null },
+      include: { variants: true },
+    })
+    if (!product) return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
 
-  if (variantId && !product.variants.some((variant) => variant.id === variantId)) {
-    return NextResponse.json({ error: 'Invalid product variant.' }, { status: 400 })
+    if (variantId && !product.variants.some((variant) => variant.id === variantId)) {
+      return NextResponse.json({ error: 'Invalid product variant.' }, { status: 400 })
+    }
+
+    const { cart, sessionId, shouldSetCookie } = await getRequestCart(true)
+    if (!cart) return NextResponse.json({ error: 'Unable to create cart.' }, { status: 500 })
+    const existing = cart.items.find((item) => item.productId === productId && item.variantId === (variantId ?? null))
+    const nextQuantity = (existing?.quantity ?? 0) + quantity
+    if (nextQuantity > 20) return NextResponse.json({ error: 'Maximum quantity is 20.' }, { status: 400 })
+
+    if (existing) {
+      await prisma.cartItem.update({ where: { id: existing.id }, data: { quantity: nextQuantity } })
+    } else {
+      await prisma.cartItem.create({ data: { cartId: cart.id, productId, variantId: variantId ?? null, quantity } })
+    }
+
+    const response = NextResponse.json({ message: 'Added to cart.', count: (cart.items.reduce((total, item) => total + item.quantity, 0) - (existing?.quantity ?? 0)) + nextQuantity })
+    return withCartCookie(response, sessionId, shouldSetCookie)
+  } catch (error) {
+    console.error('[cart POST] Error:', error)
+    return NextResponse.json({ error: 'Unable to add to cart.', detail: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
   }
-
-  const { cart, sessionId, shouldSetCookie } = await getRequestCart(true)
-  if (!cart) return NextResponse.json({ error: 'Unable to create cart.' }, { status: 500 })
-  const existing = cart.items.find((item) => item.productId === productId && item.variantId === (variantId ?? null))
-  const nextQuantity = (existing?.quantity ?? 0) + quantity
-  if (nextQuantity > 20) return NextResponse.json({ error: 'Maximum quantity is 20.' }, { status: 400 })
-
-  if (existing) {
-    await prisma.cartItem.update({ where: { id: existing.id }, data: { quantity: nextQuantity } })
-  } else {
-    await prisma.cartItem.create({ data: { cartId: cart.id, productId, variantId: variantId ?? null, quantity } })
-  }
-
-  const response = NextResponse.json({ message: 'Added to cart.', count: (cart.items.reduce((total, item) => total + item.quantity, 0) - (existing?.quantity ?? 0)) + nextQuantity })
-  return withCartCookie(response, sessionId, shouldSetCookie)
 }
 
 export async function PATCH(request: Request) {

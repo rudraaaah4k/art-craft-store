@@ -67,7 +67,8 @@ export async function getRequestCart(createGuest = false) {
 
   if (sessionId) {
     const cart = await prisma.cart.findUnique({ where: { sessionId }, include: cartInclude })
-    return { cart, sessionId, shouldSetCookie: false }
+    if (cart) return { cart, sessionId, shouldSetCookie: false }
+    // Cart was deleted (e.g. merged into user cart) — fall through to create a new one
   }
 
   if (!createGuest) return { cart: null, sessionId: undefined, shouldSetCookie: false }
