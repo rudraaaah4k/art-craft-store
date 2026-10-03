@@ -71,7 +71,10 @@ export async function POST(request: Request, { params }: Context) {
     })
     if (!response.ok) {
       const err = await response.json().catch(() => ({})) as Record<string, unknown>
-      return NextResponse.json({ message: (err as { error?: { description?: string } }).error?.description ?? 'Razorpay refund failed.' }, { status: 502 })
+      const rzpError = err.error as { code?: string; description?: string; reason?: string } | undefined
+      console.error('[refund] Razorpay refund failed', { status: response.status, paymentId: order.payment.providerPaymentId, error: err })
+      const description = rzpError?.description ?? 'Razorpay refund failed.'
+      return NextResponse.json({ message: description, razorpayError: rzpError ?? null }, { status: 502 })
     }
     const refundData = await response.json() as { id: string }
     providerRefundId = refundData.id
