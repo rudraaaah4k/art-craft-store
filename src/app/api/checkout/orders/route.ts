@@ -50,6 +50,6 @@ export async function POST(request: Request) {
     })
     return NextResponse.json({ orderId: order.id, totalPaise: order.totalPaise, paymentMethod: parsed.data.paymentMethod }, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to create order.' }, { status: 400 })
+    return NextResponse.json({ error: 'Unable to create order.' }, { status: 400 })
   }
 }

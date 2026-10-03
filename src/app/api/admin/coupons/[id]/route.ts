@@ -1,3 +1,4 @@
+import { enforceRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { getAdminApiSession } from '@/lib/admin'
 import { couponInputSchema } from '@/lib/admin-schemas'
@@ -6,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 type CouponContext = { params: Promise<{ id: string }> }
 
 export async function PATCH(request: Request, { params }: CouponContext) {
+  if (!await enforceRateLimit(request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const parsed = couponInputSchema.safeParse(await request.json())
   if (!parsed.success) return NextResponse.json({ message: 'Validation failed', issues: parsed.error.flatten() }, { status: 400 })
@@ -18,6 +20,7 @@ export async function PATCH(request: Request, { params }: CouponContext) {
 }
 
 export async function DELETE(_request: Request, { params }: CouponContext) {
+  if (!await enforceRateLimit(_request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const { id } = await params
   await prisma.coupon.delete({ where: { id } })

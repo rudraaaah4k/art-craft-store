@@ -1,3 +1,4 @@
+import { enforceRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
@@ -32,6 +33,7 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  if (!await enforceRateLimit(request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
   const body = await request.json().catch(() => null)

@@ -24,6 +24,6 @@ export async function GET(_request: Request, { params }: Context) {
     if (!rates.length) return NextResponse.json({ message: `No mock couriers serve pincode ${context.order.shippingPostalCode}.` }, { status: 400 })
     return NextResponse.json({ weightGrams: context.weightGrams, dimensionsCm: context.dimensionsCm, rates })
   } catch (error) {
-    return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to list couriers.' }, { status: 400 })
+    return NextResponse.json({ message: 'Unable to list couriers.' }, { status: 400 })
   }
 }

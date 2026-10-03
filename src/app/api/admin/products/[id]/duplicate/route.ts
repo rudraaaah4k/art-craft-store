@@ -1,3 +1,4 @@
+import { enforceRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { getAdminApiSession } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
@@ -5,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 type DuplicateContext = { params: Promise<{ id: string }> }
 
 export async function POST(_request: Request, { params }: DuplicateContext) {
+  if (!await enforceRateLimit(_request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const source = await prisma.product.findUnique({ where: { id }, include: { images: true, variants: true } })

@@ -1,3 +1,4 @@
+import { enforceRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { getAdminApiSession } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
@@ -10,6 +11,7 @@ type Context = { params: Promise<{ id: string }> }
 const orderIdSchema = z.string().trim().min(1).max(100)
 
 export async function POST(request: Request, { params }: Context) {
+  if (!await enforceRateLimit(request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const parsedId = orderIdSchema.safeParse(id)
@@ -73,6 +75,6 @@ export async function POST(request: Request, { params }: Context) {
     return NextResponse.json(shipment, { status: 201 })
   } catch (error) {
     if (error instanceof Error && error.message.includes('Unique constraint')) return NextResponse.json({ message: 'A shipment already exists for this order.' }, { status: 409 })
-    return NextResponse.json({ message: error instanceof Error ? error.message : 'Unable to create mock shipment.' }, { status: 400 })
+    return NextResponse.json({ message: 'Unable to create mock shipment.' }, { status: 400 })
   }
 }

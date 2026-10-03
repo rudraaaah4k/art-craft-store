@@ -13,6 +13,6 @@ export async function POST(request: Request) {
   try {
     return NextResponse.json({ totals: await calculateCheckoutTotals(cart, parsed.data) })
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to calculate checkout.' }, { status: 400 })
+    return NextResponse.json({ error: 'Unable to calculate checkout.' }, { status: 400 })
   }
 }

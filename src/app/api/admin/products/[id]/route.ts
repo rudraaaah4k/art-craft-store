@@ -1,3 +1,4 @@
+import { enforceRateLimit } from '@/lib/rate-limit'
 import { NextResponse } from 'next/server'
 import { getAdminApiSession } from '@/lib/admin'
 import { productInputSchema } from '@/lib/admin-schemas'
@@ -14,6 +15,7 @@ export async function GET(_request: Request, { params }: ProductRouteContext) {
 }
 
 export async function PATCH(request: Request, { params }: ProductRouteContext) {
+  if (!await enforceRateLimit(request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const parsed = productInputSchema.safeParse(await request.json())
@@ -50,11 +52,12 @@ export async function PATCH(request: Request, { params }: ProductRouteContext) {
     })
     return NextResponse.json(product)
   } catch (error) {
-    return NextResponse.json({ message: 'Product could not be updated', detail: error instanceof Error ? error.message : 'Unknown error' }, { status: 409 })
+    return NextResponse.json({ message: 'Product could not be updated', detail: 'Unknown error' }, { status: 409 })
   }
 }
 
 export async function DELETE(_request: Request, { params }: ProductRouteContext) {
+  if (!await enforceRateLimit(_request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const orderItemCount = await prisma.orderItem.count({ where: { productId: id } })
