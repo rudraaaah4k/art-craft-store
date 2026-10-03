@@ -181,9 +181,10 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - Performance: dynamically imported heavy below-the-fold components (like ReviewForm) on the Product Detail Page to reduce First Load JS. Confirmed `next/image` usage everywhere without raw `<img>` tags.
 - Performance (TTFB Fix): Parallelized sequential database queries on the Home page using `Promise.all`. Final Lighthouse scores (incognito, warm cache): Home (Perf 89, A11y 100), Shop (Perf 87, A11y 100), Product (Perf 92, A11y 95), Checkout (Perf 96, A11y 96). 
 - **Known Limitation (TTFB Cold Starts):** The application may experience a slow TTFB (~8s) on the first request due to the Neon Postgres free tier "sleeping" after inactivity. Subsequent requests within the caching window are extremely fast (< 50ms) due to Next.js ISR (`export const revalidate = 60`). For production, consider upgrading to a paid Neon tier or implementing a keep-warm ping if cold starts are unacceptable.
-- Security: configured strict security headers (CSP, X-Frame-Options, etc.) in `next.config.ts`, added server-side rate-limiting to all admin POST/PUT/DELETE API routes, and sanitized all error responses to prevent internal stack traces from leaking to the client.
+- Security: configured strict security headers (CSP, X-Frame-Options, etc.) in `next.config.ts`, added server-side rate-limiting to all admin POST/PUT/DELETE API routes, added strict Origin/Referer CSRF validation to all cookie-authenticated state-changing API routes, and sanitized all error responses to prevent internal stack traces from leaking to the client.
+- Bug Fix (Regression during Phase 7c): Discovered and fixed a pre-existing latent bug where a stale `cart_session` cookie pointing to a deleted cart caused a 500 error on add-to-cart attempts (fixed in `src/lib/cart.ts`).
 - Notifications already hooked from payment settlement + shipment status (email + WhatsApp stub).
-- Verification: `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`.
+- Verification: `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`, `scripts/regression.mjs`.
 - Gates: `npx tsc --noEmit` (0), `npm run lint` (0 warnings), `npm run build` pass.
 
 ### Commits
