@@ -50,16 +50,34 @@ export function CartClient() {
 
   const subtotal = items.reduce((total, item) => total + itemPrice(item) * item.quantity, 0)
 
-  if (loading) return <div className="max-w-5xl mx-auto w-full px-4 py-16">Loading cart...</div>
+  if (loading) return (
+    <div className="max-w-5xl mx-auto w-full px-4 py-32 flex flex-col items-center justify-center min-h-[50vh]">
+      <div className="w-12 h-12 border-4 border-sand border-t-terracotta rounded-full animate-spin mb-6"></div>
+      <p className="text-charcoal/70 text-lg font-serif">Preparing your cart...</p>
+    </div>
+  )
 
   return (
     <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-serif font-bold text-charcoal mb-8">Your Cart</h1>
-      {error && <p className="mb-4 text-terracotta">{error}</p>}
+      {error && (
+        <div className="mb-6 bg-terracotta/5 border border-terracotta/20 p-4 rounded text-terracotta flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p>{error}</p>
+        </div>
+      )}
       {items.length === 0 ? (
-        <div className="border border-sand bg-white p-8 text-center">
-          <p className="text-charcoal/70 mb-5">Your cart is waiting for something beautiful.</p>
-          <Link href="/shop" className="inline-block bg-charcoal text-white px-5 py-3 font-medium">Continue Shopping</Link>
+        <div className="bg-sand/10 border border-sand p-16 text-center rounded flex flex-col items-center justify-center min-h-[40vh]">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-20 h-20 text-charcoal/30 mb-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+          <h2 className="text-2xl font-serif text-charcoal mb-4">Your cart is empty</h2>
+          <p className="text-charcoal/70 mb-8 max-w-md mx-auto">It looks like you haven&apos;t added any beautiful handmade items to your cart yet.</p>
+          <Link href="/shop" className="inline-block bg-terracotta text-white px-8 py-3 font-medium hover:bg-charcoal transition-colors rounded">
+            Continue Shopping
+          </Link>
         </div>
       ) : (
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
