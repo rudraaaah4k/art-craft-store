@@ -5,9 +5,7 @@ import { ProductActions } from './ProductActions'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Metadata } from 'next'
-import dynamic from 'next/dynamic'
-
-const ReviewForm = dynamic(() => import('./ReviewForm').then((mod) => mod.ReviewForm), { ssr: false })
+import { ReviewFormLazy } from './ReviewFormLazy'
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.AUTH_URL || 'https://artcraftstore.in'
 
@@ -178,7 +176,7 @@ export default async function ProductPage(
             ))}
           </div>
         )}
-        <ReviewForm productId={product.id} />
+        <ReviewFormLazy productId={product.id} />
       </div>
 
       {/* Related Products */}
