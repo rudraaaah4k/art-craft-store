@@ -176,7 +176,7 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - Fixed invoice PDF typing (`renderToBuffer` + static column styles); invoice totals copy stored Order paise fields; GST breakup uses CGST+SGST same state / IGST otherwise.
 - Fixed store settings API auth/imports; empty optional strings coerce to null; extended Settings form fields wired.
 - Dashboard uses `Settings.lowStockThreshold` (not hardcoded 5).
-- Refund API: optional full refund amount, allows CAPTURED/PARTIALLY_REFUNDED, cannot exceed remaining balance, updates payment + order status; admin Refund button requires a Payment row.
+- Refund API: optional full refund amount, allows CAPTURED/PARTIALLY_REFUNDED, cannot exceed remaining balance, updates payment + order status; admin Refund button requires a Payment row. Fixed issue where UI was missing - created `<IssueRefundForm>` and integrated into order detail page `/admin/orders/[id]`.
 - CSV exports return UTF-8 bytes with BOM (Excel-safe).
 - Notifications already hooked from payment settlement + shipment status (email + WhatsApp stub).
 - Verification: `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`.
