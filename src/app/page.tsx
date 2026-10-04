@@ -43,7 +43,7 @@ export default async function HomePage() {
           </p>
           <Link 
             href="/shop" 
-            className="bg-terracotta text-white px-8 py-3 text-lg font-medium hover:bg-terracotta/90 transition-colors shadow-lg"
+            className="bg-charcoal text-white px-8 py-3 text-lg font-medium hover:bg-deep-olive transition-colors shadow-lg"
           >
             Shop Collection
           </Link>
@@ -94,7 +94,7 @@ export default async function HomePage() {
           ))}
         </div>
         <div className="mt-8 text-center sm:hidden">
-          <Link href="/shop" className="text-terracotta font-medium border border-terracotta px-6 py-2">View All Products</Link>
+          <Link href="/shop" className="text-charcoal font-medium border border-charcoal px-6 py-2">View All Products</Link>
         </div>
       </section>
 

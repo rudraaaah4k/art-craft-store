@@ -185,6 +185,9 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - Bug Fix (Regression during Phase 7c): Discovered and fixed a pre-existing latent bug where a stale `cart_session` cookie pointing to a deleted cart caused a 500 error on add-to-cart attempts (fixed in `src/lib/cart.ts`).
 - Notifications already hooked from payment settlement + shipment status (email + WhatsApp stub).
 - Phase 7d: Implemented premium UI error, empty, and loading states for existing store features (Empty Cart, Empty Order History, Empty Wishlist, Checkout loading/error states) using the project's design system (SVG icons, brand colors).
+- Phase 7e: Fixed accessibility findings from the Lighthouse artifact: mobile icon controls now have discernible names, home CTAs meet contrast expectations, and product gallery thumbnails expose labels and pressed state.
+- Phase 7f: Added a dependency-free `npm run test:e2e` HTTP smoke suite covering public pages, products, SEO routes, and invalid pincode validation.
+- Phase 7g: Documented verification commands and the alternate `E2E_BASE_URL` workflow in `README.md`.
 - Verification: `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`, `scripts/regression.mjs`.
 - Gates: `npx tsc --noEmit` (0), `npm run lint` (0 warnings), `npm run build` pass.
 

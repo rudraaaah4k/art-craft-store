@@ -237,3 +237,33 @@ SEO (sitemap, robots, schema markup, OG tags), Performance profiling and optimiz
 ## Known Issues / Notes
 
 - **Cold Starts:** The application may experience a slow TTFB (~8s) on the absolute first request after idle due to the Neon Postgres free tier "sleeping". Subsequent requests within the caching window (`revalidate = 60`) are extremely fast (< 50ms) due to Next.js ISR. For production, consider upgrading to a paid Neon tier or implementing a keep-warm ping if cold starts are unacceptable.
+
+# Phase 7e-7g Walkthrough
+
+## Acceptance Criteria
+
+| Criterion | Result | Evidence |
+| --- | --- | --- |
+| Mobile navigation controls have accessible names | PASS | Browser DOM check confirmed `Open mobile menu`, `Shopping Cart`, skip link text, and `main#main-content` at 412px. |
+| Home accessibility findings are addressed | PASS | Home CTA contrast was strengthened and the existing testimonial heading order is sequential. |
+| Product gallery thumbnails are keyboard/screen-reader identifiable | PASS | Thumbnail buttons now have `type="button"`, positional labels, and `aria-pressed`. |
+| End-to-end smoke coverage exists | PASS | `npm run test:e2e` checks public pages, `/api/products`, robots, sitemap, and invalid pincode response. |
+| Verification instructions are documented | PASS | `README.md` documents typecheck, lint, smoke tests, and `E2E_BASE_URL`. |
+
+## Verification Notes
+
+- `npx tsc --noEmit`: PASS.
+- Focused ESLint on the 7e files: PASS.
+- Browser smoke check at 412px: PASS.
+- Full `npm run lint`: existing failures remain in `scripts/add-csrf-checks.ts` and `scripts/add-rate-limits.ts`; unrelated warnings also remain in existing API routes.
+
+## Files Changed
+
+- `src/components/Header.tsx`
+- `src/app/page.tsx`
+- `src/app/products/[slug]/ProductGallery.tsx`
+- `scripts/e2e-smoke.mjs`
+- `package.json`
+- `README.md`
+- `PROGRESS.md`
+- `WALKTHROUGH.md`

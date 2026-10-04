@@ -24,6 +24,9 @@ export function ProductGallery({ images, title }: { images: ProductImage[], titl
           {images.map((img: ProductImage) => (
             <button 
               key={img.id} 
+              type="button"
+              aria-label={`View image ${images.indexOf(img) + 1} of ${images.length}`}
+              aria-pressed={activeImage === img.url}
               onClick={() => setActiveImage(img.url)}
               className={`relative w-20 h-20 flex-shrink-0 border-2 overflow-hidden ${activeImage === img.url ? 'border-terracotta' : 'border-transparent'}`}
             >
