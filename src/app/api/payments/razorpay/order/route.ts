@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     })
     if (intent.status === 'AUTHORIZED') await settlePayment({ orderId: order.id, provider: intent.provider, providerPaymentId: intent.id, metadata: { externalOrderId: intent.externalOrderId } })
     return NextResponse.json({ provider: intent.provider, keyId: process.env.RAZORPAY_KEY_ID ?? '', razorpayOrderId: intent.externalOrderId, amountPaise: intent.amountPaise, currency: intent.currency, mock: intent.provider === 'mock' })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Unable to start payment.' }, { status: 502 })
   }
 }

@@ -51,7 +51,7 @@ export async function PATCH(request: Request, { params }: ProductRouteContext) {
       include: { category: true, images: true, variants: true },
     })
     return NextResponse.json(product)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Product could not be updated', detail: 'Unknown error' }, { status: 409 })
   }
 }

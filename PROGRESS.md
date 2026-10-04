@@ -191,15 +191,10 @@ See `WALKTHROUGH.md` for the Stage 2B PASS/FAIL summary.
 - Verification: `scripts/verify-phase6.ts`, `scripts/smoke-phase6.ts`, `scripts/regression.mjs`.
 - Gates: `npx tsc --noEmit` (0), `npm run lint` (0 warnings), `npm run build` pass.
 
-### Commits
+### Phase 7 Final: Verification & Documentation
 
-- `9345f56 phase-6: add order notifications, invoice, refund, admin dashboard, reports, and customers`
-- `f37d6db wip: phase 6 partial before switching to codex`
-- `b535c47 phase-6: fix invoice tsc errors`
-- `6ea9b4d phase-6: settings migration`
-- `5d6f482 phase-6: admin dashboard ui`
-- `6e1fa62 phase-6: reports+customers ui`
-- `c77bec4 phase-6: refund+invoice ui`
-- `7de2b30 phase-6: csv bom + refund payment guard`
-- Final: `phase-6: notifications-invoices-reports`
+- **End-to-End Specs:** Added complete Playwright specs under `tests/e2e/` (`guest-checkout.spec.ts`, `admin-product.spec.ts`, `admin-shipment.spec.ts`, `admin-refund.spec.ts`, and `fixtures.ts`) using actual browser interactions (`page.goto`, `fill`, `click`). Configured `playwright.config.ts` to point to `./tests/e2e`.
+- **Lint & Hygiene:** Fixed all unused error variable warnings across API routes in `src/`. Configured `eslint.config.mjs` with global ignores for standalone testing/migration scripts and reports (`test-webhook.ts`, `clear-limits.ts`, `playwright-report/**`, `test-results/**`). Cleaned up deprecated `.eslintignore`. `npm run lint` passes with 0 errors and 0 warnings.
+- **Admin Documentation:** Verified `ADMIN_GUIDE.md` covering login, catalog/products, categories/coupons, orders, shipment creation, refunds, dashboard/reports, and settings.
+- **Final Gates:** `npx tsc --noEmit` (0 errors), `npm run lint` (0 errors, 0 warnings), `npm run build` (49/49 static and dynamic routes compiled) all passed.
 

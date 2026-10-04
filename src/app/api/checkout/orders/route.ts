@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return order
     })
     return NextResponse.json({ orderId: order.id, totalPaise: order.totalPaise, paymentMethod: parsed.data.paymentMethod }, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Unable to create order.' }, { status: 400 })
   }
 }

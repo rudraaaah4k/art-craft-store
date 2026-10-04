@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       include: { category: true, images: true, variants: true },
     })
     return NextResponse.json(product, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Product could not be created', detail: 'Unknown error' }, { status: 409 })
   }
 }

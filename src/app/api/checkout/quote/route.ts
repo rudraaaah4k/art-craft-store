@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   if (!cart || cart.items.length === 0) return NextResponse.json({ error: 'Your cart is empty.' }, { status: 400 })
   try {
     return NextResponse.json({ totals: await calculateCheckoutTotals(cart, parsed.data) })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Unable to calculate checkout.' }, { status: 400 })
   }
 }
