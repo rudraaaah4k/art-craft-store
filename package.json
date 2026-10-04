@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "node scripts/e2e-smoke.mjs",
+    "test:e2e": "playwright test",
+    "test:smoke": "node scripts/e2e-smoke.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -32,6 +33,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",

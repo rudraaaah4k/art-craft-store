@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // One-off repository migration helpers are run manually, not shipped app code.
+    "scripts/add-csrf-checks.ts",
+    "scripts/add-rate-limits.ts",
   ]),
 ]);
 
