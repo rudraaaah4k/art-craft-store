@@ -129,11 +129,11 @@ export function ProductActions({ product }: { product: ProductData }) {
         <div className="mb-4">
           {activeStock > 0 ? (
             <span className="text-deep-olive font-medium flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-deep-olive"></div> In Stock
+              <span aria-hidden="true" className="w-2 h-2 rounded-full bg-deep-olive"></span> In Stock
             </span>
           ) : (
             <span className="text-terracotta font-medium flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-terracotta"></div> Out of Stock
+              <span aria-hidden="true" className="w-2 h-2 rounded-full bg-terracotta"></span> Out of Stock
             </span>
           )}
         </div>
@@ -156,8 +156,8 @@ export function ProductActions({ product }: { product: ProductData }) {
             </svg>
           </button>
         </div>
-        {cartMsg && <p className="mt-2 text-sm text-deep-olive">{cartMsg}</p>}
-        {wishlistMsg && <p className={`mt-2 text-sm ${wishlistMsg.includes('Please log in') ? 'text-terracotta' : 'text-deep-olive'}`}>{wishlistMsg}</p>}
+        {cartMsg && <p role="status" aria-live="polite" className="mt-2 text-sm text-deep-olive">{cartMsg}</p>}
+        {wishlistMsg && <p role="status" aria-live="polite" className={`mt-2 text-sm ${wishlistMsg.includes('Please log in') ? 'text-terracotta' : 'text-deep-olive'}`}>{wishlistMsg}</p>}
       </div>
 
       {/* Pincode Check */}
@@ -168,7 +168,8 @@ export function ProductActions({ product }: { product: ProductData }) {
             type="text" 
             value={pincode}
             onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            placeholder="Enter 6-digit Pincode" 
+            placeholder="Enter 6-digit Pincode"
+            aria-label="Enter 6-digit pincode to check delivery availability"
             className="flex-1 p-2 border border-sand rounded text-sm focus:outline-none focus:border-terracotta"
           />
           <button type="submit" disabled={deliveryStatus.loading} className="bg-sand/50 px-4 py-2 text-sm font-medium rounded hover:bg-sand transition-colors">
@@ -176,7 +177,7 @@ export function ProductActions({ product }: { product: ProductData }) {
           </button>
         </form>
         {deliveryStatus.msg && (
-          <p className={`mt-2 text-sm ${deliveryStatus.error ? 'text-terracotta' : 'text-deep-olive'}`}>
+          <p role="status" aria-live="polite" className={`mt-2 text-sm ${deliveryStatus.error ? 'text-terracotta' : 'text-deep-olive'}`}>
             {deliveryStatus.msg}
           </p>
         )}

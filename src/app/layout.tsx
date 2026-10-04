@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col font-sans bg-cream text-charcoal selection:bg-terracotta selection:text-white">
         <AuthProvider>
           <Header />
-          <main className="flex-1 flex flex-col">
+          <main id="main-content" className="flex-1 flex flex-col">
             {children}
           </main>
           <Footer />

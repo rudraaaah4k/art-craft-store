@@ -95,7 +95,7 @@ export function CheckoutClient() {
           <label className="text-sm font-medium block">Coupon code<input value={form.couponCode} onChange={(event) => setForm({ ...form, couponCode: event.target.value.toUpperCase() })} className="mt-1 w-full border border-sand p-3 bg-white" /></label>
           <fieldset><legend className="text-sm font-medium mb-2">Payment method</legend><div className="flex gap-4"><label className="border border-sand p-3"><input type="radio" checked={form.paymentMethod === 'RAZORPAY'} onChange={() => setForm({ ...form, paymentMethod: 'RAZORPAY' })} /> Razorpay</label><label className="border border-sand p-3"><input type="radio" checked={form.paymentMethod === 'COD'} onChange={() => setForm({ ...form, paymentMethod: 'COD' })} /> Cash on Delivery</label></div></fieldset>
           {error && (
-            <div className="bg-terracotta/5 border border-terracotta/20 p-4 rounded text-terracotta flex items-start gap-3">
+            <div role="alert" className="bg-terracotta/5 border border-terracotta/20 p-4 rounded text-terracotta flex items-start gap-3">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 flex-shrink-0 mt-0.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
