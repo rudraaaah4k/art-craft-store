@@ -77,8 +77,6 @@ export function AdminOrders() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || 'Unable to create mock shipment.')
       setMessage(`Mock shipment created. AWB ${data.trackingNumber}. Pickup scheduled.`)
-      setActiveOrderId(null)
-      setRates([])
       await loadOrders()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to create mock shipment.')

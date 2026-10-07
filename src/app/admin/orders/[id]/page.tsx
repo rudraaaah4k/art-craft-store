@@ -63,10 +63,17 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
             Record: {order.payment ? `${order.payment.status} · ${money(order.payment.amountPaise)}` : 'None'}
           </p>
           {order.shipment && (
-            <p className="mt-2 text-sm text-charcoal/80">
-              Shipment {order.shipment.status}
-              {order.shipment.trackingNumber ? ` · AWB ${order.shipment.trackingNumber}` : ''}
-            </p>
+            <div className="mt-2 text-sm text-charcoal/80">
+              <p>
+                Shipment {order.shipment.status}
+                {order.shipment.trackingNumber ? ` · AWB ${order.shipment.trackingNumber}` : ''}
+              </p>
+              {order.shipment.labelUrl && (
+                <a href={order.shipment.labelUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-terracotta hover:underline">
+                  Download mock label
+                </a>
+              )}
+            </div>
           )}
         </div>
       </div>

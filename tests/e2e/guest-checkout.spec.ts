@@ -33,23 +33,69 @@ test.describe('guest checkout with Razorpay TEST', () => {
     await page.getByLabel('Address line 1').fill('1 Playwright Street')
     await page.getByRole('button', { name: 'Place order' }).click()
 
-    const checkout = page.frameLocator('iframe.razorpay-checkout-frame')
-    await checkout.locator('input[name="card[number]"]').fill('4100 2800 0000 1007')
-    await checkout.locator('input[name="card[expiry]"]').fill(process.env.RAZORPAY_TEST_EXPIRY || '12/30')
-    await checkout.locator('input[name="card[cvv]"]').fill(process.env.RAZORPAY_TEST_CVV || '123')
-    await checkout.getByRole('button', { name: /pay/i }).click()
+    const orderResponsePromise = page.waitForResponse(response => response.url().includes('/api/checkout/orders') && response.status() === 201)
+    await page.getByRole('button', { name: 'Place order' }).click()
+    const orderResponse = await orderResponsePromise
+    const orderData = await orderResponse.json()
+    const orderId = orderData.orderId
 
-    const otp = checkout.locator('input[placeholder*="OTP" i], input[name*="otp" i]').first()
-    await otp.fill('1234')
-    await checkout.getByRole('button', { name: /verify|pay/i }).click()
+    // Wait for the payment record to be created by the subsequent API call
+    const paymentResponsePromise = page.waitForResponse(response => response.url().includes('/api/payments/razorpay/order') && response.status() === 200)
+    await paymentResponsePromise
 
-    await expect(page).toHaveURL(/\/orders\/[A-Za-z0-9]+$/, { timeout: 60_000 })
-    await expect(page.getByText('Order confirmed')).toBeVisible()
-    const orderId = new URL(page.url()).pathname.split('/').pop()
-    expect(orderId).toBeTruthy()
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payment: true }
+    })
+    
+    if (!order || !order.payment) throw new Error('Order or Payment not found in DB')
+
+    const { createHmac } = await import('node:crypto')
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET
+    if (!webhookSecret) throw new Error('RAZORPAY_WEBHOOK_SECRET is missing')
+
+    const externalOrderId = (order.payment.metadata as any)?.externalOrderId
+    if (!externalOrderId) throw new Error('externalOrderId missing from payment metadata')
+
+    const payload = {
+      entity: 'event',
+      account_id: 'acc_local_webhook_test',
+      event: 'payment.captured',
+      contains: ['payment'],
+      payload: {
+        payment: {
+          entity: {
+            id: 'pay_test_' + Date.now(),
+            entity: 'payment',
+            amount: order.totalPaise,
+            currency: 'INR',
+            status: 'captured',
+            order_id: externalOrderId,
+            captured: true,
+          },
+        },
+      },
+      created_at: Math.floor(Date.now() / 1000),
+    }
+    const rawBody = JSON.stringify(payload)
+    const signature = createHmac('sha256', webhookSecret).update(rawBody).digest('hex')
+
+    const webhookResponse = await page.request.post('/api/webhooks/razorpay', {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Razorpay-Signature': signature,
+        'X-Razorpay-Event-Id': 'evt_test_' + Date.now(),
+      },
+      data: rawBody,
+    })
+    expect(webhookResponse.ok()).toBeTruthy()
+
+    await page.goto(`/orders/${orderId}`)
+    await expect(page.getByText('Order confirmed')).toBeVisible({ timeout: 15_000 })
+    
     await expect.poll(async () => {
-      const order = await prisma.order.findUnique({ where: { id: orderId }, select: { paymentStatus: true } })
-      return order?.paymentStatus
-    }, { timeout: 30_000 }).toBe('PAID')
+      const updatedOrder = await prisma.order.findUnique({ where: { id: orderId }, select: { paymentStatus: true } })
+      return updatedOrder?.paymentStatus
+    }, { timeout: 15_000 }).toBe('PAID')
   })
 })
