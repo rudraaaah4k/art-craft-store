@@ -50,9 +50,10 @@ export async function POST(request: Request) {
       if (parsed.data.couponCode) await transaction.coupon.update({ where: { code: totals.couponCode! }, data: { uses: { increment: 1 } } })
       await transaction.cartItem.deleteMany({ where: { cartId: cart.id } })
       return order
-    })
+    }, { maxWait: 15000, timeout: 30000 })
     return NextResponse.json({ orderId: order.id, totalPaise: order.totalPaise, paymentMethod: parsed.data.paymentMethod }, { status: 201 })
-  } catch {
+  } catch (error) {
+    console.error('ORDER CREATE ERROR', error)
     return NextResponse.json({ error: 'Unable to create order.' }, { status: 400 })
   }
 }

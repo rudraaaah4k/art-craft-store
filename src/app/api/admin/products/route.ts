@@ -49,12 +49,12 @@ export async function POST(request: Request) {
         metaTitle: input.metaTitle,
         metaDescription: input.metaDescription,
         images: { create: input.images.map((image, sortOrder) => ({ ...image, sortOrder })) },
-        variants: { create: input.variants },
+        variants: { create: input.variants.map(({ pricePaise, ...rest }) => ({ ...rest, price: pricePaise })) },
       },
       include: { category: true, images: true, variants: true },
     })
     return NextResponse.json(product, { status: 201 })
-  } catch {
+  } catch (e) { console.error(e);
     return NextResponse.json({ message: 'Product could not be created', detail: 'Unknown error' }, { status: 409 })
   }
 }

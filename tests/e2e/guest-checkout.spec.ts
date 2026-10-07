@@ -31,30 +31,57 @@ test.describe('guest checkout with Razorpay TEST', () => {
     await page.getByLabel('City').fill('New Delhi')
     await page.getByLabel('State').fill('Delhi')
     await page.getByLabel('Address line 1').fill('1 Playwright Street')
-    await page.getByRole('button', { name: 'Place order' }).click()
 
-    const orderResponsePromise = page.waitForResponse(response => response.url().includes('/api/checkout/orders') && response.status() === 201)
-    await page.getByRole('button', { name: 'Place order' }).click()
-    const orderResponse = await orderResponsePromise
-    const orderData = await orderResponse.json()
-    const orderId = orderData.orderId
+    // Click "Place order" and wait for a successful order + Razorpay order creation.
+    // On Neon free tier, the first attempt may fail with a transaction timeout, so we
+    // retry up to 3 times.
+    let orderId: string
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const orderResponsePromise = page.waitForResponse(
+        (response) => response.url().includes('/api/checkout/orders'),
+        { timeout: 45_000 },
+      )
 
-    // Wait for the payment record to be created by the subsequent API call
-    const paymentResponsePromise = page.waitForResponse(response => response.url().includes('/api/payments/razorpay/order') && response.status() === 200)
-    await paymentResponsePromise
+      // Dismiss any previous error alert before retrying
+      if (attempt > 0) {
+        await page.waitForTimeout(2000)
+      }
 
+      await page.getByRole('button', { name: 'Place order' }).click()
+      const orderResponse = await orderResponsePromise
+
+      if (orderResponse.status() === 201) {
+        const orderData = await orderResponse.json()
+        orderId = orderData.orderId
+
+        // Wait for Razorpay order creation
+        const paymentResponsePromise = page.waitForResponse(
+          (response) => response.url().includes('/api/payments/razorpay/order') && response.status() === 200,
+          { timeout: 45_000 },
+        )
+        await paymentResponsePromise
+        break
+      }
+
+      // If last attempt also failed, throw
+      if (attempt === 2) {
+        throw new Error(`Order creation failed after 3 attempts (status ${orderResponse.status()})`)
+      }
+    }
+
+    // Now simulate payment via webhook instead of interacting with Razorpay iframe
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { payment: true }
+      include: { payment: true },
     })
-    
+
     if (!order || !order.payment) throw new Error('Order or Payment not found in DB')
 
     const { createHmac } = await import('node:crypto')
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET
     if (!webhookSecret) throw new Error('RAZORPAY_WEBHOOK_SECRET is missing')
 
-    const externalOrderId = (order.payment.metadata as any)?.externalOrderId
+    const externalOrderId = (order.payment.metadata as Record<string, unknown>)?.externalOrderId as string
     if (!externalOrderId) throw new Error('externalOrderId missing from payment metadata')
 
     const payload = {
@@ -90,12 +117,19 @@ test.describe('guest checkout with Razorpay TEST', () => {
     })
     expect(webhookResponse.ok()).toBeTruthy()
 
+    // Navigate to the order page and verify it's confirmed/paid
     await page.goto(`/orders/${orderId}`)
     await expect(page.getByText('Order confirmed')).toBeVisible({ timeout: 15_000 })
-    
-    await expect.poll(async () => {
-      const updatedOrder = await prisma.order.findUnique({ where: { id: orderId }, select: { paymentStatus: true } })
-      return updatedOrder?.paymentStatus
-    }, { timeout: 15_000 }).toBe('PAID')
+
+    await expect.poll(
+      async () => {
+        const updatedOrder = await prisma.order.findUnique({
+          where: { id: orderId },
+          select: { paymentStatus: true },
+        })
+        return updatedOrder?.paymentStatus
+      },
+      { timeout: 15_000 },
+    ).toBe('PAID')
   })
 })

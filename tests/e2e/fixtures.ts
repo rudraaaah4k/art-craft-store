@@ -8,8 +8,19 @@ export async function loginAsAdmin(page: Page) {
   await page.goto('/auth/login')
   await page.getByLabel('Email').fill(adminEmail)
   await page.getByLabel('Password').fill(adminPassword)
+
+  // Wait for the NextAuth credentials API call to complete before expecting redirect
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes('/api/auth/callback/credentials') &&
+      response.status() === 200,
+    { timeout: 30_000 },
+  )
   await page.getByRole('button', { name: 'Login with Email' }).click()
-  await expect(page).toHaveURL(/\/$/)
+  await responsePromise
+
+  // The login page does router.push('/') after successful signIn — wait for it
+  await expect(page).toHaveURL(/\/$/, { timeout: 15_000 })
   await page.goto('/admin')
   await expect(page.getByRole('heading', { name: 'Catalog' })).toBeVisible()
 }

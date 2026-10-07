@@ -13,7 +13,7 @@ export default function AboutPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-16">
         <div className="relative h-[400px] w-full bg-sand/30 rounded overflow-hidden">
-          <Image src="/images/mock2.jpg" alt="Artisan working" fill className="object-cover" />
+          <Image src="/images/mock2.jpg" alt="Artisan working" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
         </div>
         <div className="prose prose-charcoal">
           <h2 className="font-serif text-2xl mb-4">Our Story</h2>

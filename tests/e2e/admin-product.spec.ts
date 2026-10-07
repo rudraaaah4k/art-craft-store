@@ -5,6 +5,7 @@ import { loginAsAdmin } from './fixtures'
 const fixtureImage = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
 
 test('admin creates a product with an image and variant, then persists edits', async ({ page }) => {
+  test.setTimeout(180_000)
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
   const title = `Playwright Catalog ${suffix}`
   const editedTitle = `${title} Edited`
@@ -12,7 +13,7 @@ test('admin creates a product with an image and variant, then persists edits', a
 
   try {
     await loginAsAdmin(page)
-    await page.waitForSelector('#product-category option:nth-child(2)')
+    await page.waitForSelector('#product-category option:nth-child(2)', { state: 'attached' })
     await page.locator('#product-title').fill(title)
     await page.locator('#product-slug').fill(slug)
     await page.locator('#product-sku').fill(`PW-${suffix}`)
@@ -34,14 +35,14 @@ test('admin creates a product with an image and variant, then persists edits', a
     await page.locator('#variant-stock-0').fill('4')
     await page.locator('#product-status').selectOption('PUBLISHED')
     await page.getByRole('button', { name: 'Create product' }).click()
-    await expect(page.getByRole('status')).toContainText('Product saved')
+    await expect(page.getByRole('status')).toContainText('Product saved', { timeout: 30_000 })
 
     const productCard = page.locator('article').filter({ hasText: title }).first()
     await expect(productCard).toContainText('PUBLISHED')
     await productCard.getByRole('button', { name: 'Edit' }).click()
     await page.locator('#product-title').fill(editedTitle)
     await page.getByRole('button', { name: 'Update product' }).click()
-    await expect(page.getByRole('status')).toContainText('Product saved')
+    await expect(page.getByRole('status')).toContainText('Product saved', { timeout: 30_000 })
 
     await page.reload()
     const editedCard = page.locator('article').filter({ hasText: editedTitle }).first()

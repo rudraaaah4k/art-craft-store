@@ -88,7 +88,7 @@ export function ProductInteractive({ product }: { product: ProductWithRelations 
                 onClick={() => setActiveImage(img.url)}
                 className={`relative w-20 h-20 flex-shrink-0 border-2 overflow-hidden ${activeImage === img.url ? 'border-terracotta' : 'border-transparent'}`}
               >
-                <Image src={img.url} alt={img.altText || ''} fill className="object-cover" />
+                <Image src={img.url} alt={img.altText || ''} fill sizes="80px" className="object-cover" />
               </button>
             ))}
           </div>

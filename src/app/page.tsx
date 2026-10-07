@@ -30,6 +30,7 @@ export default async function HomePage() {
             src="/images/mock1.jpg" 
             alt="Handmade Arts and Crafts" 
             fill 
+            sizes="100vw"
             className="object-cover"
             priority
           />
@@ -69,6 +70,7 @@ export default async function HomePage() {
                 src={`/images/mock${i + 2}.jpg`}
                 alt={cat.name}
                 fill
+                sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="relative z-20 bg-white/90 backdrop-blur-sm px-6 py-3 shadow-sm border border-sand">

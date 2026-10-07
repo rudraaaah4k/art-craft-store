@@ -46,7 +46,7 @@ export async function PATCH(request: Request, { params }: ProductRouteContext) {
         metaTitle: input.metaTitle,
         metaDescription: input.metaDescription,
         images: { deleteMany: {}, create: input.images.map((image, sortOrder) => ({ ...image, sortOrder })) },
-        variants: { deleteMany: {}, create: input.variants },
+        variants: { deleteMany: {}, create: input.variants.map(({ pricePaise, ...rest }) => ({ ...rest, price: pricePaise })) },
       },
       include: { category: true, images: true, variants: true },
     })
