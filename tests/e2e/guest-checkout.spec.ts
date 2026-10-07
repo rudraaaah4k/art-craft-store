@@ -35,7 +35,7 @@ test.describe('guest checkout with Razorpay TEST', () => {
     // Click "Place order" and wait for a successful order + Razorpay order creation.
     // On Neon free tier, the first attempt may fail with a transaction timeout, so we
     // retry up to 3 times.
-    let orderId: string
+    let orderId = ''
     for (let attempt = 0; attempt < 3; attempt++) {
       const orderResponsePromise = page.waitForResponse(
         (response) => response.url().includes('/api/checkout/orders'),
