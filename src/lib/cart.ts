@@ -61,7 +61,10 @@ export async function getRequestCart(createGuest = false) {
 
   if (session?.user?.id) {
     if (sessionId) await mergeGuestCart(session.user.id, sessionId)
-    const cart = await prisma.cart.findFirst({ where: { userId: session.user.id }, include: cartInclude })
+    let cart = await prisma.cart.findFirst({ where: { userId: session.user.id }, include: cartInclude })
+    if (!cart && createGuest) {
+      cart = await prisma.cart.create({ data: { userId: session.user.id }, include: cartInclude })
+    }
     return { cart, sessionId, shouldSetCookie: false }
   }
 
