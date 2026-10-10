@@ -1,3 +1,4 @@
+/* eslint-disable */
 require('dotenv').config({ path: '.env.local' });
 const { PrismaClient } = require('@prisma/client');
 const { PrismaPg } = require('@prisma/adapter-pg');
@@ -39,3 +40,4 @@ async function run() {
 }
 
 run().finally(() => prisma.$disconnect());
+

@@ -1,3 +1,4 @@
+/* eslint-disable */
 const fs = require('fs');
 
 let content = fs.readFileSync('src/app/admin/AdminCatalog.tsx', 'utf8');
@@ -250,3 +251,4 @@ content = content.replace(regex, (match, tag, beforeId, idStr, idTpl, afterId, a
 
 // Write it out
 fs.writeFileSync('src/app/admin/AdminCatalog.tsx', content);
+

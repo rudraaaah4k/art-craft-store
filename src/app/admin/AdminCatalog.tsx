@@ -79,18 +79,6 @@ const buttonClass =
 const secondaryButtonClass =
   'rounded-md border border-[#c9b79f] px-3 py-1.5 text-xs font-semibold hover:bg-[#f0e6d8]'
 
-function getInputClass(hasError: boolean) {
-  return `mt-1 w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 ${
-    hasError 
-      ? 'border-[#a94e28] focus:border-[#a94e28] focus:ring-[#a94e28]/20' 
-      : 'border-[#d8c7b1] focus:border-[#a94e28] focus:ring-[#a94e28]/20'
-  }`
-}
-
-function FieldError({ error, id }: { error?: string; id: string }) {
-  if (!error) return null;
-  return <p id={id} role="alert" className="mt-1 text-sm text-[#a94e28]">{error}</p>;
-}
 
 export default function AdminCatalog() {
   const [panel, setPanel] = useState<'products' | 'categories' | 'coupons'>('products')
@@ -204,9 +192,9 @@ export default function AdminCatalog() {
       setProductDraft(emptyProduct)
       setEditingProductId(null)
       setMessage('Product saved')
-    } catch (caught: any) {
-      if (caught.isFieldErrors) {
-        setFieldErrors(caught.fieldErrors)
+    } catch (caught: unknown) {
+      if (typeof caught === 'object' && caught !== null && 'isFieldErrors' in caught) {
+        setFieldErrors((caught as { fieldErrors: Record<string, string> }).fieldErrors)
         requestAnimationFrame(() => {
           const firstError = document.querySelector('[aria-invalid="true"]')
           if (firstError) {
@@ -362,9 +350,9 @@ export default function AdminCatalog() {
       setCategoryDraft(emptyCategory)
       setEditingCategoryId(null)
       setMessage('Category saved')
-    } catch (caught: any) {
-      if (caught.isFieldErrors) {
-        setFieldErrors(caught.fieldErrors)
+    } catch (caught: unknown) {
+      if (typeof caught === 'object' && caught !== null && 'isFieldErrors' in caught) {
+        setFieldErrors((caught as { fieldErrors: Record<string, string> }).fieldErrors)
         requestAnimationFrame(() => {
           const firstError = document.querySelector('[aria-invalid="true"]')
           if (firstError) {
@@ -420,9 +408,9 @@ export default function AdminCatalog() {
       setCouponDraft(emptyCoupon)
       setEditingCouponId(null)
       setMessage('Coupon saved')
-    } catch (caught: any) {
-      if (caught.isFieldErrors) {
-        setFieldErrors(caught.fieldErrors)
+    } catch (caught: unknown) {
+      if (typeof caught === 'object' && caught !== null && 'isFieldErrors' in caught) {
+        setFieldErrors((caught as { fieldErrors: Record<string, string> }).fieldErrors)
         requestAnimationFrame(() => {
           const firstError = document.querySelector('[aria-invalid="true"]')
           if (firstError) {
@@ -595,7 +583,7 @@ export default function AdminCatalog() {
 
           {/* Product form */}
           <form onSubmit={saveProduct} onChange={(e) => {
-    const name = (e.target as HTMLInputElement).name;
+    const name = (e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).name;
     if (name) {
       let field = name;
       if (name.startsWith('product-')) field = name.replace('product-', '');
@@ -1166,7 +1154,7 @@ export default function AdminCatalog() {
       {panel === 'categories' && (
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <form onSubmit={saveCategory} onChange={(e) => {
-    const name = (e.target as HTMLInputElement).name;
+    const name = (e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).name;
     if (name) {
       let field = name;
       if (name.startsWith('product-')) field = name.replace('product-', '');
@@ -1288,7 +1276,7 @@ export default function AdminCatalog() {
       {panel === 'coupons' && (
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <form onSubmit={saveCoupon} onChange={(e) => {
-    const name = (e.target as HTMLInputElement).name;
+    const name = (e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).name;
     if (name) {
       let field = name;
       if (name.startsWith('product-')) field = name.replace('product-', '');

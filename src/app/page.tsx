@@ -2,6 +2,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import type { Product, ProductImage } from '@prisma/client'
+import dynamic from 'next/dynamic'
+
+const MotionWrapper = dynamic(() => import('@/components/animations/HomeAnimations').then(m => m.MotionWrapper), { ssr: true })
+const HeroAnimation = dynamic(() => import('@/components/animations/HomeAnimations').then(m => m.HeroAnimation), { ssr: true })
+const CategoryAnimation = dynamic(() => import('@/components/animations/HomeAnimations').then(m => m.CategoryAnimation), { ssr: true })
+const ProductAnimation = dynamic(() => import('@/components/animations/HomeAnimations').then(m => m.ProductAnimation), { ssr: true })
 
 export const revalidate = 60
 
@@ -22,9 +28,11 @@ export default async function HomePage() {
   ])
 
   return (
-    <div className="flex flex-col gap-16 pb-16">
-      {/* Hero Section */}
-      <section className="relative h-[70vh] min-h-[500px] w-full bg-charcoal overflow-hidden flex items-center justify-center">
+    <MotionWrapper>
+      <div className="flex flex-col gap-16 pb-16">
+        {/* Hero Section */}
+        <HeroAnimation>
+          <section className="relative h-[70vh] min-h-[500px] w-full bg-charcoal overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 opacity-40">
           <Image 
             src="/images/mock1.jpg" 
@@ -49,7 +57,8 @@ export default async function HomePage() {
             Shop Collection
           </Link>
         </div>
-      </section>
+          </section>
+        </HeroAnimation>
 
       {/* Categories */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
@@ -59,24 +68,25 @@ export default async function HomePage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {categories.map((cat, i) => (
-            <Link 
-              key={cat.id} 
-              href={`/shop?category=${cat.slug}`}
-              className="group relative h-64 overflow-hidden bg-sand/30 block flex items-center justify-center"
-            >
-              <div className="absolute inset-0 opacity-20 group-hover:opacity-10 transition-opacity bg-charcoal z-10"></div>
-              {/* Replace with real category images if available */}
-              <Image 
-                src={`/images/mock${i + 2}.jpg`}
-                alt={cat.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="relative z-20 bg-white/90 backdrop-blur-sm px-6 py-3 shadow-sm border border-sand">
-                <h3 className="font-serif text-xl font-bold text-charcoal">{cat.name}</h3>
-              </div>
-            </Link>
+            <CategoryAnimation key={cat.id} index={i}>
+              <Link 
+                href={`/shop?category=${cat.slug}`}
+                className="group relative h-64 overflow-hidden bg-sand/30 block flex items-center justify-center"
+              >
+                <div className="absolute inset-0 opacity-20 group-hover:opacity-10 transition-opacity bg-charcoal z-10"></div>
+                {/* Replace with real category images if available */}
+                <Image 
+                  src={`/images/mock${i + 2}.jpg`}
+                  alt={cat.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="relative z-20 bg-white/90 backdrop-blur-sm px-6 py-3 shadow-sm border border-sand">
+                  <h3 className="font-serif text-xl font-bold text-charcoal">{cat.name}</h3>
+                </div>
+              </Link>
+            </CategoryAnimation>
           ))}
         </div>
       </section>
@@ -92,7 +102,9 @@ export default async function HomePage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {featuredProducts.map((prod) => (
-            <ProductCard key={prod.id} product={prod} />
+            <ProductAnimation key={prod.id}>
+              <ProductCard product={prod} />
+            </ProductAnimation>
           ))}
         </div>
         <div className="mt-8 text-center sm:hidden">
@@ -141,7 +153,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </MotionWrapper>
   )
 }
 
