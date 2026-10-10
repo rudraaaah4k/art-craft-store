@@ -3,9 +3,14 @@ import { NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { getAdminApiSession } from '@/lib/admin'
 
+export const maxDuration = 60; // Increase timeout
+
 const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME
 const CLOUDINARY_KEY = process.env.CLOUDINARY_API_KEY
 const CLOUDINARY_SECRET = process.env.CLOUDINARY_API_SECRET
+
+/** Hard ceiling when uploading through the API route (Vercel body limit is ~4.5 MB). */
+const MAX_FILE_SIZE_BYTES = 4.5 * 1024 * 1024
 
 function cloudinaryConfigured(): boolean {
   return Boolean(CLOUDINARY_CLOUD && CLOUDINARY_KEY && CLOUDINARY_SECRET)
@@ -36,8 +41,9 @@ async function uploadToCloudinary(file: File): Promise<string> {
   )
 
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`Cloudinary upload failed: ${error}`)
+    const errorBody = await response.text()
+    console.error('[upload] Cloudinary error:', response.status, errorBody)
+    throw new Error(`Cloudinary upload failed (${response.status})`)
   }
 
   const result = (await response.json()) as { secure_url: string }
@@ -49,7 +55,18 @@ export async function POST(request: Request) {
   if (!(await getAdminApiSession()))
     return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
-  const formData = await request.formData()
+  let formData: FormData
+  try {
+    formData = await request.formData()
+  } catch (err) {
+    // Most likely the request body exceeded Vercel's limit
+    console.error('[upload] Failed to parse form data:', err)
+    return NextResponse.json(
+      { message: 'File too large — the server limit is ~4.5 MB. Use a smaller image or compress it first.' },
+      { status: 413 },
+    )
+  }
+
   const file = formData.get('file')
   if (!(file instanceof File) || file.size === 0) {
     return NextResponse.json({ message: 'Choose an image file' }, { status: 400 })
@@ -60,9 +77,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Only image files are allowed' }, { status: 400 })
   }
 
-  // Validate file size (max 10 MB)
-  if (file.size > 10 * 1024 * 1024) {
-    return NextResponse.json({ message: 'Image must be smaller than 10 MB' }, { status: 400 })
+  // Validate file size
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
+    return NextResponse.json(
+      { message: `Image is ${sizeMB} MB — maximum allowed is 4.5 MB. Compress the image or use a smaller file.` },
+      { status: 413 },
+    )
   }
 
   if (cloudinaryConfigured()) {
@@ -70,19 +91,23 @@ export async function POST(request: Request) {
       const url = await uploadToCloudinary(file)
       return NextResponse.json({ url, provider: 'cloudinary', name: file.name }, { status: 201 })
     } catch (error) {
+      console.error('[upload] Cloudinary upload error:', error)
       return NextResponse.json(
-        { message: error instanceof Error ? error.message : 'Upload failed' },
-        { status: 500 },
+        { message: error instanceof Error ? error.message : 'Upload to Cloudinary failed — please try again' },
+        { status: 502 },
       )
     }
   }
 
-  // Mock upload: return a placeholder URL
+  // Cloudinary not configured — return a deterministic placeholder without writing to disk.
+  // This works on read-only filesystems (Vercel) and makes the mock status obvious.
+  console.warn('[upload] Cloudinary is not configured — returning placeholder image URL')
   return NextResponse.json(
     {
-      url: `/uploads/mock-${randomUUID()}.jpg`,
+      url: `https://placehold.co/800x800/e8dcc8/6f6255?text=${encodeURIComponent(file.name)}`,
       provider: 'mock',
       name: file.name,
+      warning: 'Cloudinary is not configured — using a placeholder image. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET for real uploads.',
     },
     { status: 201 },
   )

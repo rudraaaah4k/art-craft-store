@@ -1,6 +1,6 @@
 'use client'
 
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 
 type Category = { id: string; name: string; slug: string; description: string | null; _count?: { products: number } }
@@ -90,6 +90,9 @@ export default function AdminCatalog() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [uploadError, setUploadError] = useState('')
+  const uploadAlertRef = useRef<HTMLDivElement>(null)
+  const formAlertRef = useRef<HTMLDivElement>(null)
 
   async function loadData() {
     const [productResponse, categoryResponse, couponResponse] = await Promise.all([
@@ -130,9 +133,12 @@ export default function AdminCatalog() {
   async function saveProduct(event: FormEvent) {
     event.preventDefault()
     clearNotice()
+    setUploadError('')
     const validationError = validateProduct()
     if (validationError) {
       setError(validationError)
+      // Scroll the inline form alert into view after state update
+      requestAnimationFrame(() => formAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
       return
     }
     setBusy(true)
@@ -177,6 +183,7 @@ export default function AdminCatalog() {
       setMessage('Product saved')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Product could not be saved')
+      requestAnimationFrame(() => formAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
     } finally {
       setBusy(false)
     }
@@ -241,21 +248,29 @@ export default function AdminCatalog() {
     const file = event.target.files?.[0]
     if (!file) return
     clearNotice()
+    setUploadError('')
     setBusy(true)
     try {
       const formData = new FormData()
       formData.append('file', file)
       const data = (await responseMessage(
         await fetch('/api/admin/uploads', { method: 'POST', body: formData }),
-      )) as { url: string }
+      )) as { url: string; warning?: string }
       const images = productDraft.images.filter((image) => image.url.trim())
       setProductDraft({
         ...productDraft,
         images: [...images, { url: data.url, altText: file.name }],
       })
-      setMessage('Image uploaded')
+      if (data.warning) {
+        setUploadError(data.warning)
+        requestAnimationFrame(() => uploadAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+      } else {
+        setMessage('Image uploaded')
+      }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Upload failed')
+      const msg = caught instanceof Error ? caught.message : 'Upload failed'
+      setUploadError(msg)
+      requestAnimationFrame(() => uploadAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
     } finally {
       setBusy(false)
       event.target.value = ''
@@ -399,7 +414,7 @@ export default function AdminCatalog() {
       {/* Notification */}
       {(message || error) && (
         <div
-          role="status"
+          role={error ? 'alert' : 'status'}
           className={`rounded-lg border px-4 py-3 text-sm ${
             error
               ? 'border-red-200 bg-red-50 text-red-700'
@@ -804,6 +819,16 @@ export default function AdminCatalog() {
                   />
                 </label>
               </div>
+              {/* Inline upload error / warning */}
+              {uploadError && (
+                <div
+                  ref={uploadAlertRef}
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700"
+                >
+                  {uploadError}
+                </div>
+              )}
               <div className="space-y-2">
                 {productDraft.images.map((image, index) => (
                   <div
@@ -1039,6 +1064,17 @@ export default function AdminCatalog() {
                 />
               </label>
             </div>
+
+            {/* Inline form error near submit button */}
+            {error && (
+              <div
+                ref={formAlertRef}
+                role="alert"
+                className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700"
+              >
+                {error}
+              </div>
+            )}
 
             <button className={buttonClass} disabled={busy} type="submit">
               {busy ? 'Saving...' : editingProductId ? 'Update product' : 'Create product'}
