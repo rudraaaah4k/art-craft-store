@@ -59,9 +59,13 @@ function paise(value: string) {
 async function responseMessage(response: Response) {
   const data = (await response.json().catch(() => ({}))) as {
     message?: string
+    fieldErrors?: Record<string, string>
     issues?: { fieldErrors?: Record<string, string[]> }
   }
   if (!response.ok) {
+    if (data.fieldErrors && Object.keys(data.fieldErrors).length > 0) {
+      throw { isFieldErrors: true, message: data.message || 'Validation failed', fieldErrors: data.fieldErrors }
+    }
     const fields = Object.values(data.issues?.fieldErrors || {}).flat()
     throw new Error(fields[0] || data.message || 'Request failed')
   }
@@ -74,6 +78,19 @@ const buttonClass =
   'rounded-lg bg-[#a94e28] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#883e20] disabled:cursor-not-allowed disabled:opacity-50'
 const secondaryButtonClass =
   'rounded-md border border-[#c9b79f] px-3 py-1.5 text-xs font-semibold hover:bg-[#f0e6d8]'
+
+function getInputClass(hasError: boolean) {
+  return `mt-1 w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 ${
+    hasError 
+      ? 'border-[#a94e28] focus:border-[#a94e28] focus:ring-[#a94e28]/20' 
+      : 'border-[#d8c7b1] focus:border-[#a94e28] focus:ring-[#a94e28]/20'
+  }`
+}
+
+function FieldError({ error, id }: { error?: string; id: string }) {
+  if (!error) return null;
+  return <p id={id} role="alert" className="mt-1 text-sm text-[#a94e28]">{error}</p>;
+}
 
 export default function AdminCatalog() {
   const [panel, setPanel] = useState<'products' | 'categories' | 'coupons'>('products')
@@ -90,6 +107,7 @@ export default function AdminCatalog() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [uploadError, setUploadError] = useState('')
   const uploadAlertRef = useRef<HTMLDivElement>(null)
   const formAlertRef = useRef<HTMLDivElement>(null)
@@ -115,19 +133,19 @@ export default function AdminCatalog() {
   function clearNotice() {
     setMessage('')
     setError('')
+    setFieldErrors({})
   }
 
   function validateProduct() {
-    if (!productDraft.title.trim()) return 'Product title is required'
-    if (Number(productDraft.price) <= 0) return 'Price must be greater than zero'
+    const errs: Record<string, string> = {}
+    if (!productDraft.title.trim()) errs.title = 'Product title is required'
+    if (Number(productDraft.price) <= 0) errs.price = 'Price must be greater than zero'
     if (productDraft.salePrice && Number(productDraft.salePrice) > Number(productDraft.price))
-      return 'Sale price cannot exceed price'
-    if (Number(productDraft.weightGrams) <= 0) return 'Weight is required'
-    if (!productDraft.categoryId) return 'Choose a category'
-    if (!productDraft.sku.trim()) return 'SKU is required'
-    if (productDraft.images.some((image) => !image.url.trim()))
-      return 'Every image needs a URL or upload'
-    return ''
+      errs.salePrice = 'Sale price cannot exceed price'
+    if (Number(productDraft.weightGrams) <= 0) errs.weightGrams = 'Weight is required'
+    if (!productDraft.categoryId) errs.categoryId = 'Choose a category'
+    if (!productDraft.sku.trim()) errs.sku = 'SKU is required'
+    return errs
   }
 
   async function saveProduct(event: FormEvent) {
@@ -135,10 +153,15 @@ export default function AdminCatalog() {
     clearNotice()
     setUploadError('')
     const validationError = validateProduct()
-    if (validationError) {
-      setError(validationError)
-      // Scroll the inline form alert into view after state update
-      requestAnimationFrame(() => formAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+    if (Object.keys(validationError).length > 0) {
+      setFieldErrors(validationError)
+      requestAnimationFrame(() => {
+        const firstError = document.querySelector('[aria-invalid="true"]')
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          ;(firstError as HTMLElement).focus()
+        }
+      })
       return
     }
     setBusy(true)
@@ -181,9 +204,19 @@ export default function AdminCatalog() {
       setProductDraft(emptyProduct)
       setEditingProductId(null)
       setMessage('Product saved')
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Product could not be saved')
-      requestAnimationFrame(() => formAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+    } catch (caught: any) {
+      if (caught.isFieldErrors) {
+        setFieldErrors(caught.fieldErrors)
+        requestAnimationFrame(() => {
+          const firstError = document.querySelector('[aria-invalid="true"]')
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            ;(firstError as HTMLElement).focus()
+          }
+        })
+      } else {
+        setError(caught instanceof Error ? caught.message : 'Product could not be saved')
+      }
     } finally {
       setBusy(false)
     }
@@ -249,6 +282,12 @@ export default function AdminCatalog() {
     if (!file) return
     clearNotice()
     setUploadError('')
+    if (file.size > 4 * 1024 * 1024) {
+      setUploadError('Image must be under 4 MB')
+      requestAnimationFrame(() => uploadAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+      event.target.value = ''
+      return
+    }
     setBusy(true)
     try {
       const formData = new FormData()
@@ -323,8 +362,19 @@ export default function AdminCatalog() {
       setCategoryDraft(emptyCategory)
       setEditingCategoryId(null)
       setMessage('Category saved')
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Category could not be saved')
+    } catch (caught: any) {
+      if (caught.isFieldErrors) {
+        setFieldErrors(caught.fieldErrors)
+        requestAnimationFrame(() => {
+          const firstError = document.querySelector('[aria-invalid="true"]')
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            ;(firstError as HTMLElement).focus()
+          }
+        })
+      } else {
+        setError(caught instanceof Error ? caught.message : 'Category could not be saved')
+      }
     } finally {
       setBusy(false)
     }
@@ -370,8 +420,19 @@ export default function AdminCatalog() {
       setCouponDraft(emptyCoupon)
       setEditingCouponId(null)
       setMessage('Coupon saved')
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Coupon could not be saved')
+    } catch (caught: any) {
+      if (caught.isFieldErrors) {
+        setFieldErrors(caught.fieldErrors)
+        requestAnimationFrame(() => {
+          const firstError = document.querySelector('[aria-invalid="true"]')
+          if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            ;(firstError as HTMLElement).focus()
+          }
+        })
+      } else {
+        setError(caught instanceof Error ? caught.message : 'Coupon could not be saved')
+      }
     } finally {
       setBusy(false)
     }
@@ -533,8 +594,26 @@ export default function AdminCatalog() {
           </div>
 
           {/* Product form */}
-          <form
-            onSubmit={saveProduct}
+          <form onSubmit={saveProduct} onChange={(e) => {
+    const name = (e.target as HTMLInputElement).name;
+    if (name) {
+      let field = name;
+      if (name.startsWith('product-')) field = name.replace('product-', '');
+      else if (name.startsWith('category-')) field = name.replace('category-', '');
+      else if (name.startsWith('coupon-')) field = name.replace('coupon-', '');
+      else if (name.startsWith('variant-')) {
+        const parts = name.split('-');
+        if (parts.length >= 3) field = `variants.${parts[2]}.${parts[1]}`;
+      }
+      else if (name === 'seo-meta-title') field = 'metaTitle';
+      else if (name === 'seo-meta-description') field = 'metaDescription';
+      if (fieldErrors[field]) {
+        const next = { ...fieldErrors };
+        delete next[field];
+        setFieldErrors(next);
+      }
+    }
+  }}
             className="space-y-5 rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-4 shadow-sm sm:p-6"
           >
             <div className="flex items-center justify-between">
@@ -1086,7 +1165,26 @@ export default function AdminCatalog() {
       {/* ─── Categories panel ─── */}
       {panel === 'categories' && (
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-          <form onSubmit={saveCategory} className="rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-5">
+          <form onSubmit={saveCategory} onChange={(e) => {
+    const name = (e.target as HTMLInputElement).name;
+    if (name) {
+      let field = name;
+      if (name.startsWith('product-')) field = name.replace('product-', '');
+      else if (name.startsWith('category-')) field = name.replace('category-', '');
+      else if (name.startsWith('coupon-')) field = name.replace('coupon-', '');
+      else if (name.startsWith('variant-')) {
+        const parts = name.split('-');
+        if (parts.length >= 3) field = `variants.${parts[2]}.${parts[1]}`;
+      }
+      else if (name === 'seo-meta-title') field = 'metaTitle';
+      else if (name === 'seo-meta-description') field = 'metaDescription';
+      if (fieldErrors[field]) {
+        const next = { ...fieldErrors };
+        delete next[field];
+        setFieldErrors(next);
+      }
+    }
+  }} className="rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-5">
             <h3 className="font-serif text-2xl text-[#4a5d3a]">
               {editingCategoryId ? 'Edit category' : 'New category'}
               <HelpTip text="Categories organize the public catalog." />
@@ -1189,7 +1287,26 @@ export default function AdminCatalog() {
       {/* ─── Coupons panel ─── */}
       {panel === 'coupons' && (
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-          <form onSubmit={saveCoupon} className="rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-5">
+          <form onSubmit={saveCoupon} onChange={(e) => {
+    const name = (e.target as HTMLInputElement).name;
+    if (name) {
+      let field = name;
+      if (name.startsWith('product-')) field = name.replace('product-', '');
+      else if (name.startsWith('category-')) field = name.replace('category-', '');
+      else if (name.startsWith('coupon-')) field = name.replace('coupon-', '');
+      else if (name.startsWith('variant-')) {
+        const parts = name.split('-');
+        if (parts.length >= 3) field = `variants.${parts[2]}.${parts[1]}`;
+      }
+      else if (name === 'seo-meta-title') field = 'metaTitle';
+      else if (name === 'seo-meta-description') field = 'metaDescription';
+      if (fieldErrors[field]) {
+        const next = { ...fieldErrors };
+        delete next[field];
+        setFieldErrors(next);
+      }
+    }
+  }} className="rounded-xl border border-[#d8c7b1] bg-[#fffaf3] p-5">
             <h3 className="font-serif text-2xl text-[#4a5d3a]">
               {editingCouponId ? 'Edit coupon' : 'New coupon'}
               <HelpTip text="Percent values are whole percentages; flat values are entered in rupees." />

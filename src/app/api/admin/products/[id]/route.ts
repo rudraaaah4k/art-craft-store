@@ -19,7 +19,7 @@ export async function PATCH(request: Request, { params }: ProductRouteContext) {
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const parsed = productInputSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', issues: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', fieldErrors: Object.fromEntries(parsed.error.issues.map(i => [i.path.join('.'), i.message])) }, { status: 400 })
   const input = parsed.data
 
   try {

@@ -10,7 +10,7 @@ export async function PATCH(request: Request, { params }: CategoryContext) {
   if (!await enforceRateLimit(request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const parsed = categoryInputSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', issues: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', fieldErrors: Object.fromEntries(parsed.error.issues.map(i => [i.path.join('.'), i.message])) }, { status: 400 })
   const { id } = await params
   try {
     return NextResponse.json(await prisma.category.update({ where: { id }, data: parsed.data }))

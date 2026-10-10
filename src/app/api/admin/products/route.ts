@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
   const parsed = productInputSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', issues: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', fieldErrors: Object.fromEntries(parsed.error.issues.map(i => [i.path.join('.'), i.message])) }, { status: 400 })
 
   const input = parsed.data
   const category = await prisma.category.findUnique({ where: { id: input.categoryId } })

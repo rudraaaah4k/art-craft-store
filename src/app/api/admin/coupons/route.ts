@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   if (!await enforceRateLimit(request, 'admin-write', 60)) return NextResponse.json({ message: 'Too many requests' }, { status: 429 })
   if (!await getAdminApiSession()) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
   const parsed = couponInputSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', issues: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return NextResponse.json({ message: 'Validation failed', fieldErrors: Object.fromEntries(parsed.error.issues.map(i => [i.path.join('.'), i.message])) }, { status: 400 })
   try {
     return NextResponse.json(await prisma.coupon.create({ data: { ...parsed.data, validUntil: parsed.data.validUntil ? new Date(parsed.data.validUntil) : null } }), { status: 201 })
   } catch {
