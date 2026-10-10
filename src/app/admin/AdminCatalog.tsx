@@ -194,7 +194,8 @@ export default function AdminCatalog() {
       setMessage('Product saved')
     } catch (caught: unknown) {
       if (typeof caught === 'object' && caught !== null && 'isFieldErrors' in caught) {
-        setFieldErrors((caught as { fieldErrors: Record<string, string> }).fieldErrors)
+        const err = caught as unknown as { fieldErrors: Record<string, string> }
+        setFieldErrors(err.fieldErrors)
         requestAnimationFrame(() => {
           const firstError = document.querySelector('[aria-invalid="true"]')
           if (firstError) {
@@ -352,7 +353,8 @@ export default function AdminCatalog() {
       setMessage('Category saved')
     } catch (caught: unknown) {
       if (typeof caught === 'object' && caught !== null && 'isFieldErrors' in caught) {
-        setFieldErrors((caught as { fieldErrors: Record<string, string> }).fieldErrors)
+        const err = caught as unknown as { fieldErrors: Record<string, string> }
+        setFieldErrors(err.fieldErrors)
         requestAnimationFrame(() => {
           const firstError = document.querySelector('[aria-invalid="true"]')
           if (firstError) {
@@ -410,7 +412,8 @@ export default function AdminCatalog() {
       setMessage('Coupon saved')
     } catch (caught: unknown) {
       if (typeof caught === 'object' && caught !== null && 'isFieldErrors' in caught) {
-        setFieldErrors((caught as { fieldErrors: Record<string, string> }).fieldErrors)
+        const err = caught as unknown as { fieldErrors: Record<string, string> }
+        setFieldErrors(err.fieldErrors)
         requestAnimationFrame(() => {
           const firstError = document.querySelector('[aria-invalid="true"]')
           if (firstError) {
@@ -583,7 +586,7 @@ export default function AdminCatalog() {
 
           {/* Product form */}
           <form onSubmit={saveProduct} onChange={(e) => {
-    const name = (e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).name;
+    const name = ((e.target as unknown) as HTMLInputElement).name;
     if (name) {
       let field = name;
       if (name.startsWith('product-')) field = name.replace('product-', '');
@@ -1154,7 +1157,7 @@ export default function AdminCatalog() {
       {panel === 'categories' && (
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <form onSubmit={saveCategory} onChange={(e) => {
-    const name = (e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).name;
+    const name = ((e.target as unknown) as HTMLInputElement).name;
     if (name) {
       let field = name;
       if (name.startsWith('product-')) field = name.replace('product-', '');
@@ -1276,7 +1279,7 @@ export default function AdminCatalog() {
       {panel === 'coupons' && (
         <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <form onSubmit={saveCoupon} onChange={(e) => {
-    const name = (e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement).name;
+    const name = ((e.target as unknown) as HTMLInputElement).name;
     if (name) {
       let field = name;
       if (name.startsWith('product-')) field = name.replace('product-', '');
