@@ -107,9 +107,9 @@ export function PageTransition({ children, route }: { children: ReactNode; route
       <AnimatePresence mode="wait">
         <m.div
           key={route}
-          initial={{ opacity: 0, scale: 0.98, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, scale: 1.02, filter: 'blur(4px)' }}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 1.02 }}
           transition={{ duration: 0.4, ease: MOTION_TOKENS.ease.out }}
           className="w-full h-full"
         >

@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # PROJECT RULES (always follow)
 
 ## Role
@@ -46,3 +50,13 @@ Product must include: sku, price, salePrice, gstPercent, stock, weightGrams, len
 - Every phase must end with: (1) updated task list, (2) run the app, (3) browser-test the phase's acceptance checklist and attach screenshots/recording, (4) a Walkthrough artifact listing PASS/FAIL per criterion, known issues, and files changed, (5) then STOP.
 - Fix all FAIL items before asking for "go".
 - Commit after each phase with message "phase-N: <summary>".
+
+## 3D / MOTION RULES (for the redesign)
+- Stack: React Three Fiber + drei + three (pin exact compatible versions after checking docs for installed React/Next), Framer Motion, Lenis (smooth scroll). Load R3F only via next/dynamic ssr:false inside the Home scene wrapper; never in the root layout bundle.
+- Three quality tiers via a single useQuality() hook: HIGH (desktop GPU), MEDIUM (modern phone), LOW (hardwareConcurrency<=4 or deviceMemory<=4 or saveData or no WebGL) -> LOW renders the static/CSS fallback, no Canvas.
+- Canvas: dpr capped at [1, 1.5] on mobile, antialias off on mobile, textures max 1024px (512 on mobile), geometries reused/instanced, no real-time shadows on mobile, pause rendering when off-screen (IntersectionObserver) and when tab hidden.
+- Animate transform/opacity in DOM; no layout-affecting animation. CLS must stay 0.
+- prefers-reduced-motion: no animation, static layout. No scroll-jacking: native scroll with Lenis only smooths it.
+- Content (headings, product names, prices, links) is always real HTML, server-rendered, crawlable. 3D is progressive enhancement.
+- Cart, checkout, account, admin: only micro-interactions (<=200ms), no 3D.
+- Design tokens only: cream, terracotta #A85324, olive, charcoal, sand; Playfair + Inter.
