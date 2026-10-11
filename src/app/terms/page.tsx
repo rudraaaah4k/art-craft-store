@@ -1,25 +1,53 @@
 import { Metadata } from 'next'
+import { Reveal } from '@/lib/motion'
 
 export const metadata: Metadata = { title: 'Terms of Service | ArtCraft' }
 
 export default function TermsPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-16 w-full prose prose-charcoal">
-      <h1 className="font-serif text-4xl text-charcoal mb-8">Terms of Service</h1>
-      
-      <p>Welcome to ArtCraft. By accessing our website and purchasing our products, you agree to be bound by these Terms of Service.</p>
-      
-      <h3>1. Products and Pricing</h3>
-      <p>All prices are in Indian Rupees (INR) and are inclusive of GST. We reserve the right to modify prices without prior notice. We make every effort to display as accurately as possible the colors and images of our products.</p>
-      
-      <h3>2. Orders and Payment</h3>
-      <p>By placing an order, you warrant that you are legally capable of entering into binding contracts. We accept prepaid methods (credit/debit cards, UPI, net banking) and Cash on Delivery for eligible orders up to ₹3000.</p>
-      
-      <h3>3. Intellectual Property</h3>
-      <p>The content on this website, including digital art, designs, images, and text, is the property of ArtCraft or its artisans. It may not be reproduced without explicit permission.</p>
-      
-      <h3>4. Changes to Terms</h3>
-      <p>We reserve the right to update or change these Terms of Service at any time. Your continued use of the website following any changes constitutes acceptance of those changes.</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 w-full">
+      <Reveal>
+        <div className="mb-10 pb-6 border-b border-sand">
+          <span className="text-xs uppercase tracking-widest text-terracotta font-bold block mb-2">
+            Legal Terms
+          </span>
+          <h1 className="font-serif text-4xl sm:text-5xl text-charcoal font-bold tracking-tight mb-4">
+            Terms of Service
+          </h1>
+          <p className="text-charcoal/70 text-base sm:text-lg">
+            Please read these terms carefully before exploring or placing orders on ArtCraft Store.
+          </p>
+        </div>
+      </Reveal>
+
+      <div className="space-y-8">
+        <Reveal delay={0.1}>
+          <div className="bg-white/80 p-6 sm:p-8 rounded-xl border border-sand shadow-sm space-y-3">
+            <h2 className="font-serif text-2xl font-bold text-charcoal">1. Products & Transparent Pricing</h2>
+            <p className="text-charcoal/80 leading-relaxed text-sm sm:text-base">
+              All prices displayed across ArtCraft are in Indian Rupees (INR) and are inclusive of applicable Goods and Services Tax (GST). Item listings include detailed dimensions, materials, and artisan technique notes. Due to the handmade nature of traditional craftsmanship, slight natural variances in brushstroke texture and pigment shade are authentic characteristics of original work.
+            </p>
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.15}>
+          <div className="bg-white/80 p-6 sm:p-8 rounded-xl border border-sand shadow-sm space-y-3">
+            <h2 className="font-serif text-2xl font-bold text-charcoal">2. Orders & Stock Reservations</h2>
+            <p className="text-charcoal/80 leading-relaxed text-sm sm:text-base">
+              Upon proceeding to checkout, inventory is temporarily reserved for 15 minutes to prevent overselling. If payment is uncompleted within this window, the stock reservation expires automatically and returns to inventory.
+            </p>
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.2}>
+          <div className="bg-white/80 p-6 sm:p-8 rounded-xl border border-sand shadow-sm space-y-3">
+            <h2 className="font-serif text-2xl font-bold text-charcoal">3. Intellectual Property</h2>
+            <p className="text-charcoal/80 leading-relaxed text-sm sm:text-base">
+              All photography, descriptions, artist biographies, and bespoke designs published on this site are intellectual assets of ArtCraft and our respective artisan partners. Unauthorized commercial reproduction or automated scraping is prohibited.
+            </p>
+          </div>
+        </Reveal>
+      </div>
     </div>
   )
 }

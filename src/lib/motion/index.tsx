@@ -56,18 +56,8 @@ export function useReducedMotion() {
 }
 
 // --- 2. Shared Easing/Spring Tokens ---
-
-export const MOTION_TOKENS = {
-  spring: {
-    stiff: { type: 'spring', stiffness: 300, damping: 25 },
-    gentle: { type: 'spring', stiffness: 100, damping: 20 },
-    bouncy: { type: 'spring', stiffness: 400, damping: 10 },
-  },
-  ease: {
-    out: [0.33, 1, 0.68, 1] as [number, number, number, number],
-    inOut: [0.65, 0, 0.35, 1] as [number, number, number, number],
-  },
-}
+import { MOTION_TOKENS } from './tokens'
+export { MOTION_TOKENS }
 
 // --- 3. Lenis Provider ---
 

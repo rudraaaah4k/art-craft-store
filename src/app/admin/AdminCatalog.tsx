@@ -289,11 +289,10 @@ export default function AdminCatalog() {
         ...productDraft,
         images: [...images, { url: data.url, altText: file.name }],
       })
+      setMessage('Image uploaded')
       if (data.warning) {
         setUploadError(data.warning)
         requestAnimationFrame(() => uploadAlertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
-      } else {
-        setMessage('Image uploaded')
       }
     } catch (caught) {
       const msg = caught instanceof Error ? caught.message : 'Upload failed'
