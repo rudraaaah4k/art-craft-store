@@ -9,7 +9,7 @@ export function StorefrontMotionProvider({ children }: { children: ReactNode }) 
   
   return (
     <LenisProvider>
-      <PageTransition route={pathname}>
+      <PageTransition route={pathname || ''}>
         {children}
       </PageTransition>
     </LenisProvider>

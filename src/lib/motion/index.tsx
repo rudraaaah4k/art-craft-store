@@ -14,6 +14,7 @@ import {
 import Lenis from 'lenis'
 
 const loadFeatures = () => import('framer-motion').then(res => res.domAnimation)
+export { loadFeatures }
 
 // --- 1. Quality & Reduced Motion Hooks ---
 
@@ -25,13 +26,18 @@ export function useQuality(): QualityTier {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const nav = navigator as any
-    const hardwareConcurrency = nav.hardwareConcurrency || 8
-    const deviceMemory = nav.deviceMemory || 8
-    const saveData = nav.connection?.saveData || false
+    const hardwareConcurrency = nav.hardwareConcurrency ?? 8
+    const deviceMemory = nav.deviceMemory ?? 8
+    const saveData = Boolean(nav.connection?.saveData)
     
-    // Simple WebGL check
-    const canvas = document.createElement('canvas')
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    // WebGL support check
+    let gl: any = null
+    try {
+      const canvas = document.createElement('canvas')
+      gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    } catch {
+      gl = null
+    }
     
     if (hardwareConcurrency <= 4 || deviceMemory <= 4 || saveData || !gl) {
       setTier('LOW')
@@ -69,21 +75,26 @@ export function LenisProvider({ children }: { children: ReactNode }) {
   const reducedMotion = useReducedMotion()
   
   useEffect(() => {
-    if (reducedMotion) return
+    const prefersReduced = Boolean(
+      reducedMotion || (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    )
+    if (prefersReduced) return
     
     const lenis = new Lenis({
       lerp: 0.1,
       smoothWheel: true,
     })
 
+    let rafId: number
     function raf(time: number) {
       lenis.raf(time)
-      requestAnimationFrame(raf)
+      rafId = requestAnimationFrame(raf)
     }
 
-    requestAnimationFrame(raf)
+    rafId = requestAnimationFrame(raf)
 
     return () => {
+      cancelAnimationFrame(rafId)
       lenis.destroy()
     }
   }, [reducedMotion])
@@ -93,10 +104,12 @@ export function LenisProvider({ children }: { children: ReactNode }) {
 
 // --- 4. Page Transition Wrapper ---
 
-export function PageTransition({ children, route }: { children: ReactNode; route: string }) {
+export function PageTransition({ children, route }: { children: ReactNode; route?: string }) {
   const reducedMotion = useReducedMotion()
   
-  const isExcluded = ['/admin', '/checkout', '/cart', '/account'].some(r => route.startsWith(r))
+  const isExcluded = Boolean(
+    route && ['/admin', '/checkout', '/cart', '/account'].some(r => route.startsWith(r))
+  )
 
   if (isExcluded || reducedMotion) {
     return <>{children}</>
